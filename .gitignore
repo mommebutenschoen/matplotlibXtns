@@ -1,0 +1,6 @@
+*.pyc
+*~
+*.swp
+__pycache__
+matplotlibXtns.egg-info/
+_build
