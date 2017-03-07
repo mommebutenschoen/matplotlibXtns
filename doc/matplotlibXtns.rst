@@ -4,7 +4,7 @@ matplotlibXtns package
 Submodules
 ----------
 
-matplotlibXtns.netCDFTemplate module
+matplotlibXtns.matplotlibXtns module
 ------------------------------------
 
 .. automodule:: matplotlibXtns.matplotlibXtns
@@ -12,3 +12,13 @@ matplotlibXtns.netCDFTemplate module
     :undoc-members:
     :special-members:
     :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: matplotlibXtns
+    :members:
+    :undoc-members:
+    :special-members:
+    :show-inheritance:
+
