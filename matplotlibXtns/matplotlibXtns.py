@@ -35,7 +35,7 @@ except:
 from matplotlib.colors import ColorConverter,LinearSegmentedColormap
 from scipy.stats.mstats import mquantiles
 from irregularInterpolation import interpolationGrid
-
+from operator import itemgetter
 def discretizeColormap(colmap,N):
    cmaplist = [colmap(i) for i in range(colmap.N)]
    return colmap.from_list('Custom discrete cmap', cmaplist, N)
@@ -903,7 +903,7 @@ def findXYDuplicates(x,y,d,preserveMask=False):
       xyd=[[xn,yn,n] for xn,yn,n in zip(x,y,arange(l))]
     else:
       xyd=[[xn,yn,dn] for xn,yn,dn in zip(x,y,d)]
-    xyd.sort(lambda x,y:cmp(x[:2],y[:2]))
+    xyd.sort(key=itemgetter(0,1))
     elm1=xyd[0]
     for m,el in enumerate(xyd[1:]):
         if el[:2]==elm1[:2]:
