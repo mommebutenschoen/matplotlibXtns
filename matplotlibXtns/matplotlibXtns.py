@@ -648,6 +648,11 @@ def worldMarble(lon,lat,var,lon0=-160.,countries=True,**opts):
 def worldPlot(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
    """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
    if len(lon)==1: lon,lat=meshgrid(lon,lat)
+   #transform lon to -180,180 interval
+   lon0=lon0%360.
+   if lon0>180: lon0-=360
+   lon=lon%360.
+   lon=where(lon>180,lon-360,lon)
    m = Basemap(projection=projection,
       lon_0=lon0,
       resolution=resolution)
@@ -665,6 +670,9 @@ def worldPlot(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=Fal
    dLon=360./xres
    dLat=180./yres
    Lon=arange(lon0-180.+dLon/2.,lon0+180.,dLon)
+   #transform Lon to -180,180 interval
+   Lon=where(Lon>180,Lon-360,Lon)
+   Lon=where(Lon<-180,Lon+360,Lon)
    Lat=arange(-90.+dLat/2.,90.,dLat)
    Lon,Lat=meshgrid(Lon,Lat)
    X,Y=m(Lon,Lat)
