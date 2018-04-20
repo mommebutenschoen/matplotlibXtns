@@ -154,8 +154,8 @@ def discreteColors(noc,cols=['r','b','#FFF000','g','m','c','#FF8000','#400000','
     while noc>len(cols): cols.extend(cols)
     cc=ColorConverter()
     clrs=[cc.to_rgba(col) for col in cols]
-    ds=1./float(noc-1)
-    splits=arange(0,1+.1*ds,ds)
+    ds=1./float(noc)
+    splits=arange(0,1-.1*ds,ds)
     cdict={}
     cdentry=[(0.,clrs[0][0],clrs[0][0],)]
     for slev in arange(1,splits.shape[0]):
