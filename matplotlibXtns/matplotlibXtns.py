@@ -398,7 +398,7 @@ def pixeliseIrregularData(m,lon2D,lat2D,data):
     xfi2D,yfi2D=meshgrid(xfi,yfi)
     #xci2D,yci2D=meshgrid(xci,yci)
     print("interpolating...")
-    di=griddata(x,y,d,xci,yci)
+    di=griddata(x,y,d,xci,yci,interp='linear')
     #lon2D=where(lon2D<lonll,lon2D+360.,lon2D)
     #dd=pixeliseGrid(m,lon2D,lat2D,data,dim,lonll,latll,lonur,latur)
     #lon2D=where(lon2D>180,lon2D-360.,lon2D)
@@ -451,7 +451,7 @@ def mapIrregularGrid(map,ax,lon,lat,data,lon0,xres=2000,yres=1000):
     xfi[0]=xfi[0]+1.e-5
     print('\t...interpolating on ',xres,'x',yres,' grid...')
     xfi2D,yfi2D=meshgrid(xfi,yfi)
-    di=griddata(lon,lat,data,xci,yci)
+    di=griddata(lon,lat,data,xci,yci,interp="linear")
     xci,yci=meshgrid(xci,yci)
     #get position of dateline:
     dl=where(xci[0,:]<-180.,xci[0,:]+360.,xci[0,:]).argmin()
