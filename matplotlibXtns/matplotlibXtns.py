@@ -645,7 +645,67 @@ def worldMarble(lon,lat,var,lon0=-160.,countries=True,**opts):
    p=pcolormesh(xm,ym,dm,**opts)
    return map,p
 
-def worldPlot(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
+def worldPcolormesh(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
+   """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
+   if len(lon)==1: lon,lat=meshgrid(lon,lat)
+   #transform lon to -180+lon0,180+lon0 interval
+   lon0=lon0%360.
+   if lon0>180: lon0-=360
+   lon=lon%360.
+   lon=where(lon>180+lon0,lon-360+lon0,lon)
+   lon=where(lon<-180+lon0,lon+360+lon0,lon)
+   m = Basemap(projection=projection,
+      lon_0=lon0,
+      resolution=resolution)
+   m.drawmapboundary()
+   ax=gca()
+   ax.set_axis_bgcolor((0./255.,59./255.,80./255.,255./255.))
+   m.drawmeridians(arange(int(lon0-180)/10*10,int(lon0+180)/10*10,30))
+   m.drawparallels(arange(-60,61,30.))
+   m.drawcoastlines()
+   if countries: m.drawcountries()
+   if rivers: m.drawrivers(color=(0./255.,59./255.,80./255.,1))
+   #Interpolation grid:
+   if xres==None: xres=lon.shape[1]
+   if yres==None: yres=lon.shape[0]
+   dLon=360./xres
+   dLat=180./yres
+   Lon=arange(lon0-180.+dLon/2.,lon0+180.,dLon)
+   #transform Lon to -180,180 interval
+   Lat=arange(-90.+dLat/2.,90.,dLat)
+   Lon,Lat=meshgrid(Lon,Lat)
+   Lon_b=arange(lon0-180.,lon0+180+.1*dLon,dLon)
+   #transform Lon to -180,180 interval
+   Lat_b=arange(-90.,90.+.1*dLat,dLat)
+   Lon_b,Lat_b=meshgrid(Lon_b,Lat_b)
+   Xb,Yb=m(Lon_b,Lat_b)
+   X,Y=m(Lon,Lat)
+   #Reduce data
+   msk=getmaskarray(data)
+   if any(msk):
+       data=data.ravel().compressed()
+       lon=masked_where(msk,lon).ravel().compressed()
+       lat=masked_where(msk,lat).ravel().compressed()
+   else:
+       lon=lon.ravel()
+       lat=lat.ravel()
+       data=data.ravel()
+   lon,lat,data=removeXYDuplicates(lon,lat,data)
+   x,y=m(lon,lat)
+   #Intepolate:
+   Data=griddata(x,y,data,X,Y,interp=interp)
+   LSMask=logical_not(maskoceans(Lon,Lat,Data,inlands=False).mask)
+   Data=masked_where(LSMask,Data)
+   #xi,yi,di=mapIrregularGrid(map,ax,lon,lat,v,lon0,xres=xres,yres=yres)
+   if marble:
+       m.bluemarble()
+       p=m.pcolormesh(Xb,Yb,Data,**opts)
+   else:
+       m.pcolormesh(Xb,Yb,Data,**opts)
+       p=m.fillcontinents(color=landcolour)
+   return m,p,Xb,Yb,Data
+
+def worldContourf(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
    """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
    if len(lon)==1: lon,lat=meshgrid(lon,lat)
    #transform lon to -180,180 interval
@@ -701,28 +761,28 @@ def worldPlot(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=Fal
        p=m.fillcontinents(color=landcolour)
    return m,p,X,Y,Data
 
-def worldPlotIPT(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=False,countries=True,marble=False,mask=False,**opts):
-   """Plots a variable given on an irregular grid on a world map. Longitude and latitude should be given cell centered."""
-   v=var.squeeze()
-   map = Basemap(projection='robin',
-      lon_0=lon0,
-      resolution='i')
-   map.drawmapboundary()
-   ax=gca()
-   ax.set_axis_bgcolor((0./255.,59./255.,80./255.,255./255.))
-   map.drawmeridians(arange(int(lon0-180)/10*10,int(lon0+180)/10*10,30))
-   map.drawparallels(arange(-60,61,30.))
-   map.drawcoastlines()
-   if countries: map.drawcountries()
-   if rivers: map.drawrivers(color=(0./255.,59./255.,80./255.,1))
-   xi,yi,di,IP=mapIrregular(map,ax,lon,lat,v,lon0,IPT=IPT,xres=xres,yres=yres)
-   if marble:
-       map.bluemarble()
-       p=pcolormesh(xi,yi,di,**opts)
-   else:
-       p=map.pcolormesh(xi,yi,di,**opts)
-       pol=map.fillcontinents(color=(209/255.,162/255.,14/255.,1))
-   return map,p,IP
+   def worldPlotIPT(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=False,countries=True,marble=False,mask=False,**opts):
+      """Plots a variable given on an irregular grid on a world map. Longitude and latitude should be given cell centered."""
+      v=var.squeeze()
+      map = Basemap(projection='robin',
+         lon_0=lon0,
+         resolution='i')
+      map.drawmapboundary()
+      ax=gca()
+      ax.set_axis_bgcolor((0./255.,59./255.,80./255.,255./255.))
+      map.drawmeridians(arange(int(lon0-180)/10*10,int(lon0+180)/10*10,30))
+      map.drawparallels(arange(-60,61,30.))
+      map.drawcoastlines()
+      if countries: map.drawcountries()
+      if rivers: map.drawrivers(color=(0./255.,59./255.,80./255.,1))
+      xi,yi,di,IP=mapIrregular(map,ax,lon,lat,v,lon0,IPT=IPT,xres=xres,yres=yres)
+      if marble:
+         map.bluemarble()
+         p=pcolormesh(xi,yi,di,**opts)
+      else:
+         p=map.pcolormesh(xi,yi,di,**opts)
+         pol=map.fillcontinents(color=(209/255.,162/255.,14/255.,1))
+      return map,p,IP
 
 def worldPlotMasked(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=False,countries=True,marble=False,**opts):
    """Plots a variable given on an irregular grid on a world map. Longitude and latitude should be given cell centered."""
