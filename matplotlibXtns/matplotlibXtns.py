@@ -645,7 +645,7 @@ def worldMarble(lon,lat,var,lon0=-160.,countries=True,**opts):
    p=pcolormesh(xm,ym,dm,**opts)
    return map,p
 
-def worldPcolormesh(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
+def worldPcolormesh(lon,lat,data,contours=10,lon0=0.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
    """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
    if len(lon)==1: lon,lat=meshgrid(lon,lat)
    #transform lon to -180+lon0,180+lon0 interval
