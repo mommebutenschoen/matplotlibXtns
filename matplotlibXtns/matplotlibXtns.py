@@ -32,7 +32,7 @@ try:
 except:
    print("Could not import pyproj")
    pyprojFlag=False
-from matplotlib.colors import ColorConverter,LinearSegmentedColormap
+from matplotlib.colors import ColorConverter,LinearSegmentedColormap,to_rgb
 from scipy.stats.mstats import mquantiles
 from irregularInterpolation import interpolationGrid
 from operator import itemgetter
@@ -330,6 +330,37 @@ def mlMap(brightness=.5):
     'green':((0.,.0,.0),(.495,.75,.75),(.5,1.,1.),(.505,.75,.75),(1.,b,b)),
     'blue':((0.,b,b),(.495,.75,.75),(.5,1.,1.),(.505,.75,.75),(1.,.0,.0))}, N=256)
     return cmap
+
+def asymmetric_divergent_cmap(point0,colorlow="xkcd:reddish",colorhigh="xkcd:petrol",color0_low="w",color0_up=0,n=256):
+    """Construct LinearSegmentedColormap with linear gradient between end point colors and midcolors,
+    where the mid-point may be moved to any relative position in between 0 and 1.
+
+    Args:
+        point0 (float): relative position between 0 and 1 where color0_low and color0_up apply
+        colorlow (valid matplotlib color specification): color at low limit of colormap
+        colorhigh (valid matplotlib color specification): color at high limit of colormap
+        color0_low (valid matplotlib color specification): color at point0 approached from lower values
+        color0_high (valid matplotlib color specification): color at point0 approached from higher value,
+            defaults to color0_low
+        n (integer): color resolution
+
+    Returns:
+        LinearSegmentedColormap
+        """
+    rl,gl,bl=to_rgb(colorlow)
+    r0,g0,b0=to_rgb(color0_low)
+    rh,gh,bh=to_rgb(colorhigh)
+
+    if color0_up:
+        r0h,g0h,b0h=to_rgb(color0_up)
+    else:
+        r0h,g0h,b0h=to_rgb(color0_low)
+    adcmap=LinearSegmentedColormap("DivAsCMap",
+        {"red":((0.,rl,rl),(point0,r0,r0h),(1,rh,rh)),
+        "green":((0.,gl,gl),(point0,g0,g0h),(1,gh,gh)),
+        "blue":((0.,bl,bl),(point0,b0,b0h),(1,bh,bh))})
+    return adcmap
+
 
 justifyGrid=lambda x2d,y2d,data,x,y: griddata(x2d.flatten(),y2d.flatten(),data.flatten(),x,y)
 
