@@ -497,7 +497,7 @@ def mapIrregularGrid(map,ax,lon,lat,data,lon0,xres=2000,yres=1000):
     xci=marray(xci)
     xci[:,dl:]=maskoceans(xci[:,dl:],yci[:,dl:],xci[:,dl:])
     xci[:,:dl]=maskoceans(xci[:,:dl]+360.,yci[:,:dl],xci[:,:dl])
-    xci.mask=-xci.mask
+    xci.mask=~xci.mask
     di=masked_where(xci.mask,di)
     return xfi2D,yfi2D,di
 
