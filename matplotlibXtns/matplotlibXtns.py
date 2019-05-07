@@ -576,7 +576,7 @@ def mapMaskedIrregular(map,ax,lon,lat,data,lon0,lsmask=False,IPT=None,xres=2000,
     xfi2D,yfi2D=map(xfi2D,yfi2D)
     return xfi2D,yfi2D,di,IP
 
-def mapMerc(lon,lat,var,marble=False,rivers=False,countries=True,coastlines=False,LandColour=(209/255.,162/255.,14/255.,1),SeaColour=(0./255.,59./255.,80./255.,255./255.),**opts):
+def mapMerc(lon,lat,var,marble=False,rivers=False,countries=True,coastlines=False,LandColour="0.3",SeaColour="1.0",**opts):
    v=var.squeeze()
    dlon=lon.max()-lon.min()
    map = Basemap(projection='merc',llcrnrlon=lon.min(),llcrnrlat=lat.min(),
@@ -604,7 +604,7 @@ def mapMerc(lon,lat,var,marble=False,rivers=False,countries=True,coastlines=Fals
    del(v,x,y)
    return pl,map,ax,zoom
 
-def mapOrtho(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour=(209/255.,162/255.,14/255.,1),SeaColour=(0./255.,59./255.,80./255.,255./255.),lon_0=False,lat_0=False,**opts):
+def mapOrtho(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,**opts):
    if not lon_0: lon_0=lon.mean()
    if not lat_0: lat_0=lat.mean()
    v=var.squeeze()
@@ -644,9 +644,9 @@ def mapPlot(lon,lat,var,panning=0.,proj='robin',marble=False,rivers=False,countr
    map.drawmapboundary()
    pl=map.pcolormesh(x,y,v,**opts)
    if not marble:
-       map.fillcontinents(color=(209/255.,162/255.,14/255.,1))
+       map.fillcontinents(color="0.3")
        if countries: map.drawcountries()
-       if rivers: map.drawrivers(color=(0./255.,59./255.,80./255.,1))
+       if rivers: map.drawrivers(color="1.0")
    xmin=x.min()-panning
    xmax=x.max()+panning
    ymin=y.min()-panning
@@ -676,7 +676,7 @@ def worldMarble(lon,lat,var,lon0=-160.,countries=True,**opts):
    p=pcolormesh(xm,ym,dm,**opts)
    return map,p
 
-def worldPcolormesh(lon,lat,data,contours=10,lon0=0.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
+def worldPcolormesh(lon,lat,data,contours=10,lon0=0.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.3",**opts):
    """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
    if len(lon)==1: lon,lat=meshgrid(lon,lat)
    #transform lon to -180+lon0,180+lon0 interval
@@ -736,7 +736,7 @@ def worldPcolormesh(lon,lat,data,contours=10,lon0=0.,xres=None,yres=None,rivers=
        p=m.fillcontinents(color=landcolour)
    return m,p,Xb,Yb,Data
 
-def worldContourf(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.7",**opts):
+def worldContourf(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.3",**opts):
    """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
    if len(lon)==1: lon,lat=meshgrid(lon,lat)
    #transform lon to -180,180 interval
@@ -800,19 +800,19 @@ def worldContourf(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers
          resolution='i')
       map.drawmapboundary()
       ax=gca()
-      ax.set_facecolor((0./255.,59./255.,80./255.,255./255.))
+      ax.set_facecolor("1.0")
       map.drawmeridians(arange(int(lon0-180)/10*10,int(lon0+180)/10*10,30))
       map.drawparallels(arange(-60,61,30.))
       map.drawcoastlines()
       if countries: map.drawcountries()
-      if rivers: map.drawrivers(color=(0./255.,59./255.,80./255.,1))
+      if rivers: map.drawrivers(color="1.0")
       xi,yi,di,IP=mapIrregular(map,ax,lon,lat,v,lon0,IPT=IPT,xres=xres,yres=yres)
       if marble:
          map.bluemarble()
          p=pcolormesh(xi,yi,di,**opts)
       else:
          p=map.pcolormesh(xi,yi,di,**opts)
-         pol=map.fillcontinents(color=(209/255.,162/255.,14/255.,1))
+         pol=map.fillcontinents(color="0.3")
       return map,p,IP
 
 def worldPlotMasked(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=False,countries=True,marble=False,**opts):
@@ -823,12 +823,12 @@ def worldPlotMasked(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=Fal
        resolution='i')
    map.drawmapboundary()
    ax=gca()
-   ax.set_facecolor((0./255.,59./255.,80./255.,255./255.))
+   ax.set_facecolor("1.0")
    map.drawmeridians(arange(int(lon0-180)/10*10,int(lon0+180)/10*10,30))
    map.drawparallels(arange(-60,61,30.))
    map.drawcoastlines()
    if countries: map.drawcountries()
-   if rivers: map.drawrivers(color=(0./255.,59./255.,80./255.,1))
+   if rivers: map.drawrivers(color="1.0")
    lsMask=logical_not(maskoceans(lon,lat,getdata(v)).mask)
    xi,yi,di,IP=mapMaskedIrregular(map,ax,lon,lat,v,lon0,lsmask=lsMask,IPT=IPT,xres=xres,yres=yres)
    if marble:
@@ -836,7 +836,7 @@ def worldPlotMasked(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=Fal
        p=pcolormesh(xi,yi,di,**opts)
    else:
        p=map.pcolormesh(xi,yi,di,**opts)
-       pol=map.fillcontinents(color=(209/255.,162/255.,14/255.,1))
+       pol=map.fillcontinents(color="0.3")
    return map,p,IP
 
 def worldCylPlot(lon,lat,var,lon0=0.,IPT=None,xres=500,yres=250,rivers=False,countries=True,marble=False,grid=True,coastlines=True,mask=False,**opts):
@@ -847,24 +847,24 @@ def worldCylPlot(lon,lat,var,lon0=0.,IPT=None,xres=500,yres=250,rivers=False,cou
        resolution='i')
    map.drawmapboundary()
    ax=gca()
-   ax.set_facecolor((0./255.,59./255.,80./255.,255./255.))
+   ax.set_facecolor("1.0")
    if grid:
        map.drawmeridians(arange(int(lon0-180)/10*10,int(lon0+180)/10*10,30))
        map.drawparallels(arange(-60,60,30.))
    if coastlines:
        map.drawcoastlines()
    if countries: map.drawcountries()
-   if rivers: map.drawrivers(color=(0./255.,59./255.,80./255.,1))
+   if rivers: map.drawrivers(color="1.0")
    xi,yi,di=mapIrregularGrid(map,ax,lon,lat,v,lon0,xres=xres,yres=yres)
    if marble:
        map.bluemarble()
        p=pcolormesh(xi,yi,di,**opts)
    else:
        p=map.pcolormesh(xi,yi,di,**opts)
-       pol=map.fillcontinents(color=(209/255.,162/255.,14/255.,1))
+       pol=map.fillcontinents(color="0.3")
    return map,p
 
-def mapTMerc(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour=(209/255.,162/255.,14/255.,1),SeaColour=(0./255.,59./255.,80./255.,255./255.),lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
+def mapTMerc(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
    if not lon_0: lon_0=lon.mean()
    if not lat_0: lat_0=lat.mean()
    latmin=lat.min()
@@ -894,7 +894,7 @@ def mapTMerc(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=Tr
    del(v,x,y)
    return pl,map,ax,zoom
 
-def mapCassini(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour=(209/255.,162/255.,14/255.,1),SeaColour=(0./255.,59./255.,80./255.,255./255.),lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
+def mapCassini(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
    if not lon_0: lon_0=lon.mean()
    if not lat_0: lat_0=lat.mean()
    latmin=lat.min()
@@ -924,7 +924,7 @@ def mapCassini(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=
    del(v,x,y)
    return pl,map,ax,zoom
 
-def mapLambert(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour=(209/255.,162/255.,14/255.,1),SeaColour=(0./255.,59./255.,80./255.,255./255.),lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
+def mapLambert(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
    if not lon_0: lon_0=lon.mean()
    if not lat_0: lat_0=lat.mean()
    latmin=lat.min()
