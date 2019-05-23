@@ -361,11 +361,10 @@ def asymmetric_divergent_cmap(point0,colorlow="xkcd:reddish",colorhigh="xkcd:pet
 
     Returns:
         LinearSegmentedColormap
-        """
+    """
     rl,gl,bl=to_rgb(colorlow)
     r0,g0,b0=to_rgb(color0_low)
     rh,gh,bh=to_rgb(colorhigh)
-
     if color0_up:
         r0h,g0h,b0h=to_rgb(color0_up)
     else:
@@ -376,6 +375,28 @@ def asymmetric_divergent_cmap(point0,colorlow="xkcd:reddish",colorhigh="xkcd:pet
         "blue":((0.,bl,bl),(point0,b0,b0h),(1,bh,bh))})
     return adcmap
 
+def asymmetric_cmap_around_zero(vmin,vmax,**opts):
+    """Construct LinearSegmentedColormap with linear gradient between end point colors and midcolors,
+    where the mid-point is set at 0 in between vmin and vmax. Calls asymmetric_divergent_cmap print_function
+    to generate colormap.
+
+    Args:
+        vmin (float): minimum value for colormap
+        vmax (float): maximum value for colormap
+        opts: additional arguments passed to asymmetric_divergent_cmap
+
+    Returns:
+        Dictionary with cmap, vmin and vmax keys and respective definitions for unfolding into matplotlib
+        color plot functions.
+    """
+    if vmin*vmax<0:
+        p0=-vmin/(vmax-vmin)
+    elif vmin+vmax<0:
+        p0=1.
+    else:
+        p0=0.
+    cm=asymmetric_divergent_cmap(p0,**opts)
+    return {"cmap":cm,"vmin":vmin,"vmax":vmax}
 
 justifyGrid=lambda x2d,y2d,data,x,y: griddata(x2d.flatten(),y2d.flatten(),data.flatten(),x,y)
 
