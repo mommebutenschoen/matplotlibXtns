@@ -15,7 +15,8 @@ from numpy.ma import array as marray
 from scipy import linspace,meshgrid
 from mpl_toolkits.basemap import Basemap,interp,maskoceans,shiftgrid,addcyclic
 from datetime import datetime
-from matplotlib.mlab import griddata
+#from matplotlib.mlab import griddata
+from scipy.interpolate import griddata as sc_griddata
 from matplotlib.dates import date2num,YearLocator,DateFormatter,MonthLocator
 from matplotlib.pyplot import pcolormesh,axis,gca,text,colorbar,figure,boxplot,plot,get_cmap,fill_between,contourf
 try:
@@ -36,6 +37,20 @@ from matplotlib.colors import ColorConverter,LinearSegmentedColormap,to_rgb
 from scipy.stats.mstats import mquantiles
 from irregularInterpolation import interpolationGrid
 from operator import itemgetter
+
+def griddata(x,y,z,xi,yi,interp="nn"):
+    """Funtion to map old matplotlib.mlab style griddata calls to
+    scipy.interpolate.griddata calls"""
+    if interp=="nn":
+        method="nearest"
+    else:
+        method=interp
+    X=array((x,y)).T
+    XI,YI=meshgrid(xi,yi)
+    XY=array((XI.ravel(),YI.ravel())).T
+    ZI=sc_griddata(X,z,XY,method=method).reshape(XI.shape)
+    return ZI
+
 def discretizeColormap(colmap,N):
    cmaplist = [colmap(i) for i in range(colmap.N)]
    return colmap.from_list('Custom discrete cmap', cmaplist, N)
