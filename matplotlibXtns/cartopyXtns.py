@@ -47,7 +47,20 @@ if cartopy_installed:
             if colourbar: cb=f.colorbar(cnt,ax=ax,shrink=.5,aspect=10)
             return cnt,cb
 
-        def interpolate(self,lon,lat,data,*args,res=360.,**opts):
+        def pcolormesh(self,*args,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,**opts):
+            if not f:
+                f=figure(figsize=[12,6])
+            if not ax:
+                ax=f.add_subplot(111,projection=self.prj)
+            cnt=ax.pcolormesh(*args,**opts,zorder=-1)
+            ax.coastlines(land_res)
+            if land_colour:
+                print("Filling continents")
+                ax.add_feature(feature.LAND, facecolor=land_colour)
+            if colourbar: cb=f.colorbar(cnt,ax=ax,shrink=.5,aspect=10)
+            return cnt,cb
+
+        def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,**opts):
             xmin,xmax=self.prj.x_limits
             ymin,ymax=self.prj.y_limits
             dx=(xmax-xmin)/res
@@ -79,8 +92,17 @@ if cartopy_installed:
                 xylonlat[:,1]>90,xylonlat[:,1]<-90)),True,globmask)
             if any(globmask):
                 dxy=masked_where(globmask,dxy)
-            return x,y,dxy.reshape(xx.shape)
+            if bounds:
+                xb=arange(xmin,xmax+.1*dx,dx)
+                yb=arange(ymin,ymax+.1*dy,dy)
+                return x,y,dxy.reshape(xx.shape),xb,yb
+            else:
+                return x,y,dxy.reshape(xx.shape)
 
-        def interpolatedContourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,**opts):
+        def interpolated_contourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,**opts):
             x,y,d=self.interpolate(lon,lat,data,res=res)
             return self.contourf(x,y,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
+
+        def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,**opts):
+            x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True)
+            return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
