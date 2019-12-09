@@ -1,12 +1,17 @@
+from __future__ import print_function
 try:
     from cartopy import crs
     cartopy_installed=True
 except ImportError:
     print("Cartopy module not found. This matplotlibXtns install excludes cartopy functionality.")
     cartopyt_installed=False
+try:
+    from itertools import izip as zip
+except ImportError:
+    pass
 if cartopy_installed:
     from cartopy import feature
-    from numpy import arange,array,unique,diff,meshgrid,zeros,logical_or,any,where
+    from numpy import arange,array,unique,diff,meshgrid,zeros,logical_or,any,where,ones
     from scipy.interpolate import griddata
     from pdb import set_trace
     from matplotlib.pyplot import figure
@@ -106,3 +111,12 @@ if cartopy_installed:
         def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,**opts):
             x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True)
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
+
+def mask_feature(x2d,y2d,feat=feature.LAND,eps=1.e-5):
+            Mask=ones(x2d.shape,bool)
+            for n,(x,y) in enumerate(zip(x2d.ravel(),y2d.ravel())):
+                try:
+                    next(feat.intersecting_geometries((x-eps,x+eps,y-eps,y+eps)))
+                except StopIteration:
+                    Mask.ravel()[n]=False
+            return Mask
