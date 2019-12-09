@@ -112,7 +112,7 @@ if basemap_installed:
     map.drawmeridians(arange(lonmin,lonmax,(lonmax-lonmin)/5.),labels=[0,0,0,1])
     map.drawparallels(arange(latmin,latmax,(latmax-latmin)/5.),labels=[0,1,0,0])
     return map
- 
+
   def worldMap(center=11.,latres=20.,lonres=20.,marble=True,coast=False):
    m = Basemap(projection='robin',lon_0=center,lat_0=0.,resolution='i')
    if marble:
@@ -125,7 +125,7 @@ if basemap_installed:
    m.drawmeridians(np.arange(ceil((center-180)/lonres)*lonres,ceil(180/lonres)*lonres,lonres),color='0.5',labels=[0,0,0,1])
    m.drawparallels(np.arange(ceil(-90/latres)*latres,ceil(90/latres)*latres,latres),color='0.5',labels=[1,0,0,0])
    return m
- 
+
   def mapVar(map,lon,lat,var):
     #var=v(var)[tlevel,level,:,:].squeeze()
     var=var[:].squeeze()
@@ -133,12 +133,12 @@ if basemap_installed:
     x,y = map(x.transpose(),y.transpose())
     pl=map.pcolormesh(x,y,var.transpose())
     return pl
- 
+
   def mapPlace(map,lon,lat,name,marker='ro',xfrac=100.,yfrac=100.,**opts):
      x,y = map(lon,lat)
      map.plot([x],[y],marker)
      text(x+map.xmax/xfrac,y+map.ymax/yfrac,name,**opts)
- 
+
 
   def mapIrregularData(map,ax,lon,lat,data,xres=2000,yres=1000,mask=False):
      """Maps irregular data on a basemap object using interpolation on a xresxyres grid."""
@@ -160,7 +160,7 @@ if basemap_installed:
      #	       Mask.ravel()[n]=(Mask.ravel()[n] or False)
      di=griddata(x,y,d,xci,yci)
      return xfi2D,yfi2D,di
- 
+
   def mapIrregularGrid(map,ax,lon,lat,data,lon0,xres=2000,yres=1000):
      """Maps irregular data on a basemap object using interpolation on a xresxyres grid."""
      lon=masked_where(getmaskarray(data),lon)
@@ -198,7 +198,7 @@ if basemap_installed:
      xci.mask=~xci.mask
      di=masked_where(xci.mask,di)
      return xfi2D,yfi2D,di
- 
+
   def mapIrregular(map,ax,lon,lat,data,lon0,IPT=None,xres=2000,yres=1000):
      """Maps irregular data on a basemap object using interpolation on a xresxyres grid."""
      lon=masked_where(getmaskarray(data),lon)
@@ -236,7 +236,7 @@ if basemap_installed:
      xfi2D=where(xfi2D>180.,xfi2D-360.,xfi2D)
      xfi2D,yfi2D=map(xfi2D,yfi2D)
      return xfi2D,yfi2D,di,IP
- 
+
   def mapMaskedIrregular(map,ax,lon,lat,data,lon0,lsmask=False,IPT=None,xres=2000,yres=1000):
      """Maps irregular data on a basemap object using interpolation on a xresxyres grid."""
      slmask=logical_not(lsmask)
@@ -273,7 +273,7 @@ if basemap_installed:
      xfi2D=where(xfi2D>180.,xfi2D-360.,xfi2D)
      xfi2D,yfi2D=map(xfi2D,yfi2D)
      return xfi2D,yfi2D,di,IP
- 
+
   def mapMerc(lon,lat,var,marble=False,rivers=False,countries=True,coastlines=False,LandColour="0.3",SeaColour="1.0",**opts):
     v=var.squeeze()
     dlon=lon.max()-lon.min()
@@ -301,7 +301,7 @@ if basemap_installed:
     zoom=axis()
     del(v,x,y)
     return pl,map,ax,zoom
- 
+
   def mapOrtho(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,**opts):
     if not lon_0: lon_0=lon.mean()
     if not lat_0: lat_0=lat.mean()
@@ -327,7 +327,7 @@ if basemap_installed:
     zoom=axis()
     del(v,x,y)
     return pl,map,ax,zoom
- 
+
   def mapPlot(lon,lat,var,panning=0.,proj='robin',marble=False,rivers=False,countries=True,coastlines=False,**opts):
     v=var.squeeze()
     panning=panning*1.e6
@@ -357,7 +357,7 @@ if basemap_installed:
     zoom=axis()
     del(v,x,y)
     return pl,map,ax,zoom
- 
+
   def worldMarble(lon,lat,var,lon0=-160.,countries=True,**opts):
     """Plots a variable given on an irregular grid on a BlueMarble map. Longitude and latitude should be given cell centered."""
     v=var.squeeze()
@@ -373,7 +373,7 @@ if basemap_installed:
     map.bluemarble()
     p=pcolormesh(xm,ym,dm,**opts)
     return map,p
- 
+
   def worldPcolormesh(lon,lat,data,contours=10,lon0=0.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.3",**opts):
     """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
     if len(lon)==1: lon,lat=meshgrid(lon,lat)
@@ -433,7 +433,7 @@ if basemap_installed:
         m.pcolormesh(Xb,Yb,Data,**opts)
         p=m.fillcontinents(color=landcolour)
     return m,p,Xb,Yb,Data
- 
+
   def worldContourf(lon,lat,data,contours=10,lon0=-160.,xres=None,yres=None,rivers=False,countries=True,marble=False,mask=False,resolution='l',projection="hammer",interp="linear",landcolour="0.3",**opts):
     """Plots a variable given on an irregular grid on a world map using contourf. Longitude and latitude should be given cell centered."""
     if len(lon)==1: lon,lat=meshgrid(lon,lat)
@@ -489,7 +489,7 @@ if basemap_installed:
         m.contourf(X,Y,Data,contours,**opts)
         p=m.fillcontinents(color=landcolour)
     return m,p,X,Y,Data
- 
+
   def worldPlotIPT(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=False,countries=True,marble=False,mask=False,**opts):
     """Plots a variable given on an irregular grid on a world map. Longitude and latitude should be given cell centered."""
     v=var.squeeze()
@@ -512,7 +512,7 @@ if basemap_installed:
        p=map.pcolormesh(xi,yi,di,**opts)
        pol=map.fillcontinents(color="0.3")
     return map,p,IP
- 
+
   def worldPlotMasked(lon,lat,var,lon0=-160.,IPT=None,xres=600,yres=400,rivers=False,countries=True,marble=False,**opts):
     """Plots a variable given on an irregular grid on a world map. Longitude and latitude should be given cell centered."""
     v=var.squeeze()
@@ -536,7 +536,7 @@ if basemap_installed:
         p=map.pcolormesh(xi,yi,di,**opts)
         pol=map.fillcontinents(color="0.3")
     return map,p,IP
- 
+
   def worldCylPlot(lon,lat,var,lon0=0.,IPT=None,xres=500,yres=250,rivers=False,countries=True,marble=False,grid=True,coastlines=True,mask=False,**opts):
     """Plots a variable given on an irregular grid on a world map. Longitude and latitude should be given cell centered."""
     v=var.squeeze()
@@ -561,7 +561,7 @@ if basemap_installed:
         p=map.pcolormesh(xi,yi,di,**opts)
         pol=map.fillcontinents(color="0.3")
     return map,p
- 
+
   def mapTMerc(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
     if not lon_0: lon_0=lon.mean()
     if not lat_0: lat_0=lat.mean()
@@ -591,7 +591,7 @@ if basemap_installed:
     zoom=axis()
     del(v,x,y)
     return pl,map,ax,zoom
- 
+
   def mapCassini(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
     if not lon_0: lon_0=lon.mean()
     if not lat_0: lat_0=lat.mean()
@@ -621,7 +621,7 @@ if basemap_installed:
     zoom=axis()
     del(v,x,y)
     return pl,map,ax,zoom
- 
+
   def mapLambert(lon,lat,var,marble=False,rivers=False,countries=False,coastlines=True,LandColour="0.3",SeaColour="1.0",lon_0=False,lat_0=False,width=False,height=False,dl=30,**opts):
     if not lon_0: lon_0=lon.mean()
     if not lat_0: lat_0=lat.mean()
@@ -651,7 +651,7 @@ if basemap_installed:
     zoom=axis()
     del(v,x,y)
     return pl,map,ax,zoom
- 
+
   def worldRegPlot(lon,lat,var,lon0=0.,rivers=False,countries=True,marble=False,mask=False,**opts):
     """Plots a variable given on an irregular grid on a world map. Longitude and latitude should be given cell centered."""
     v=var.squeeze()
@@ -673,9 +673,8 @@ if basemap_installed:
         p=pcolormesh(lon,lat,var,**opts)
         pol=map.fillcontinents(color=(209/255.,162/255.,14/255.,1))
     return map,p
- 
+
   def mapData(bm,xdata,ydata,data,mask=False):
      x,y=bm(xdata.ravel(),ydata.ravel())
      d=data.ravel()
      return removeXYDuplicates(x,y,d,mask=mask)
- 
