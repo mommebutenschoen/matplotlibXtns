@@ -4,7 +4,7 @@ try:
     cartopy_installed=True
 except ImportError:
     print("Cartopy module not found. This matplotlibXtns install excludes cartopy functionality.")
-    cartopyt_installed=False
+    cartopy_installed=False
 try:
     from itertools import izip as zip
 except ImportError:
@@ -112,7 +112,7 @@ if cartopy_installed:
             x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True)
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
-def mask_feature(x2d,y2d,feat=feature.LAND,eps=1.e-5):
+    def mask_feature(x2d,y2d,feat=feature.LAND,eps=1.e-5):
             Mask=ones(x2d.shape,bool)
             for n,(x,y) in enumerate(zip(x2d.ravel(),y2d.ravel())):
                 try:
