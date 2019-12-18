@@ -49,7 +49,8 @@ if cartopy_installed:
             ax.coastlines(land_res)
             if land_colour:
                 print("Filling continents")
-                ax.add_feature(feature.LAND, facecolor=land_colour)
+                ax.add_feature(feature.NaturalEarthFeature('physical', 'land', land_res,
+                                        facecolor=land_colour))
             #ax.set_extent([xmin,xmax,ymin,ymax])
             if colourbar: cb=f.colorbar(pcm,ax=ax,shrink=.5,aspect=10)
             return cnt,cb
@@ -62,8 +63,8 @@ if cartopy_installed:
             pcm=ax.pcolormesh(x,y,*args,**opts,zorder=-1)
             ax.coastlines(land_res)
             if land_colour:
-                print("Filling continents")
-                ax.add_feature(feature.LAND, facecolor=land_colour)
+                ax.add_feature(feature.NaturalEarthFeature('physical', 'land', land_res,
+                                        facecolor=land_colour))
             if colourbar: cb=f.colorbar(pcm,ax=ax,shrink=.5,aspect=10)
             return pcm,cb
 
