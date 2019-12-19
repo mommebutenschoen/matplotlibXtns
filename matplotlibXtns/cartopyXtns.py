@@ -68,11 +68,11 @@ if cartopy_installed:
             if colourbar: cb=f.colorbar(pcm,ax=ax,shrink=.5,aspect=10)
             return pcm,cb
 
-        def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=0,**opts):
+        def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=0,mask=False,**opts):
             if zoom:
-                xyminmax=self.prj.transform_points(self.ref_prj,lon.ravel(),lat.ravel())
-                xmin,xmax=xyminmax[:,0].min(),xyminmax[:,0].max()
-                ymin,ymax=xyminmax[:,1].min(),xyminmax[:,1].max()
+                xy=self.prj.transform_points(self.ref_prj,lon.ravel(),lat.ravel())
+                xmin,xmax=xy[:,0].min(),xy[:,0].max()
+                ymin,ymax=xy[:,1].min(),xy[:,1].max()
                 Dx=xmin-xmax
                 Dy=ymin-ymax
                 xmin=xmin-(zoom-100.)/200.*Dx
@@ -111,6 +111,11 @@ if cartopy_installed:
                 xylonlat[:,1]>90,xylonlat[:,1]<-90)),True,globmask)
             if any(globmask):
                 dxy=masked_where(globmask,dxy)
+            if mask:
+                (xm,ym),unq_id=unique(array([xy[:,0].ravel(),xy[:,1].ravel()]),return_index=True,axis=1)
+                uMask=1*Mask[unq_id]
+                mxy=griddata((xm,ym),uMask.ravel(),(xx.ravel(),yy.ravel()),*args,**opts)
+                dxy=masked_where(mxy,dxy)
             if bounds:
                 xb=arange(xmin,xmax+.1*dx,dx)
                 yb=arange(ymin,ymax+.1*dy,dy)
@@ -168,8 +173,8 @@ if cartopy_installed:
         def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=101,**opts):
             return oceanMap.interpolated_pcolormesh(self,lon,lat,data,*args,res=res,land_colour=land_colour,land_res=land_res,f=f,ax=ax,colourbar=colourbar,zoom=zoom,**opts)
 
-        def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=101,**opts):
-            return oceanMap.interpolate(self,lon,lat,data,*args,res=res,bounds=bounds,zoom=zoom,**opts)
+        def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=101,mask=True,**opts):
+            return oceanMap.interpolate(self,lon,lat,data,*args,res=res,bounds=bounds,zoom=zoom,mask=mask,**opts)
 
     def mask_feature(x2d,y2d,feat=feature.LAND,eps=1.e-5):
             Mask=ones(x2d.shape,bool)
