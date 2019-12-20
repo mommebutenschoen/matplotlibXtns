@@ -13,7 +13,6 @@ if cartopy_installed:
     from cartopy import feature
     from numpy import arange,array,unique,diff,meshgrid,zeros,logical_or,any,where,ones
     from scipy.interpolate import griddata
-    from pdb import set_trace
     from matplotlib.pyplot import figure
     from numpy.ma import getmaskarray,masked_where
 
@@ -109,13 +108,14 @@ if cartopy_installed:
             globmask=zeros(xx.ravel().shape,bool)
             globmask=where(logical_or.reduce((xylonlat[:,0]>180,xylonlat[:,0]<-180,
                 xylonlat[:,1]>90,xylonlat[:,1]<-90)),True,globmask)
+            dmask=False
             if any(globmask):
-                dxy=masked_where(globmask,dxy)
+                dmask=globmask
             if mask:
                 (xm,ym),unq_id=unique(array([xy[:,0].ravel(),xy[:,1].ravel()]),return_index=True,axis=1)
                 uMask=1*Mask[unq_id]
-                mxy=griddata((xm,ym),uMask.ravel(),(xx.ravel(),yy.ravel()),*args,**opts)
-                dxy=masked_where(mxy,dxy)
+                dmask=logical_or(dmask,griddata((xm,ym),uMask,(xx.ravel(),yy.ravel()),*args,**opts))
+            dxy=masked_where(dmask,dxy)
             if bounds:
                 xb=arange(xmin,xmax+.1*dx,dx)
                 yb=arange(ymin,ymax+.1*dy,dy)
@@ -123,14 +123,14 @@ if cartopy_installed:
             else:
                 return x,y,dxy.reshape(xx.shape)
 
-        def interpolated_contourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,**opts):
-            x,y,d=self.interpolate(lon,lat,data,res=res,zoom=zoom)
+        def interpolated_contourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
+            x,y,d=self.interpolate(lon,lat,data,res=res,zoom=zoom,mask=mask,method=method)
             print("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
             print("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.contourf(x,y,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
-        def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,**opts):
-            x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom)
+        def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,method="nearest",**opts):
+            x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom,mask=mask,method=method)
             print("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
             print("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
@@ -151,17 +151,19 @@ if cartopy_installed:
                     prj=crs.AlbersEqualArea
             if array(lon0).ndim>0:
                 try:
-                    lon0=(lon0.max()-lon0.min())/2.
+                    lon0=(lon0.max()+lon0.min())/2.
                 except AttributeError:
-                    lon0=(max(lon0)-min(lon0))
+                    lon0=(max(lon0)+min(lon0))
             if array(lat0).ndim>0:
                 try:
-                    lat0=(lat0.max()-lat0.min())/2.
+                    latmin,latmax=lat0.min(),lat0.max()
                 except AttributeError:
-                    lat0=(max(lat0)-min(lat0))
+                    latmin,latma=min(lat0),max(lat0)
+                lat0=.5*(latmax+latmin)
+                dlat=latmax-latmin
             if prj==crs.AlbersEqualArea:
                 print("Initialising regional AlbersEqualArea projection centred at {}N,{}E".format(lat0,lon0))
-                self.prj=prj(central_longitude=lon0,central_latitude=lat0,*args,**opts)
+                self.prj=prj(central_longitude=lon0,central_latitude=lat0,standard_parallels=(lat0-dlat*.45,lat0+dlat*45),*args,**opts)
             else:
                 print("Initialising regional PlateCarree projection centred at {}E".format(lon0))
                 self.prj=prj(lon0,*args,**opts)
@@ -173,8 +175,8 @@ if cartopy_installed:
         def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=101,**opts):
             return oceanMap.interpolated_pcolormesh(self,lon,lat,data,*args,res=res,land_colour=land_colour,land_res=land_res,f=f,ax=ax,colourbar=colourbar,zoom=zoom,**opts)
 
-        def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=101,mask=True,**opts):
-            return oceanMap.interpolate(self,lon,lat,data,*args,res=res,bounds=bounds,zoom=zoom,mask=mask,**opts)
+        def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=101,method="linear",**opts):
+            return oceanMap.interpolate(self,lon,lat,data,*args,res=res,bounds=bounds,zoom=zoom,method=method,**opts)
 
     def mask_feature(x2d,y2d,feat=feature.LAND,eps=1.e-5):
             Mask=ones(x2d.shape,bool)
