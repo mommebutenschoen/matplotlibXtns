@@ -11,10 +11,13 @@ except ImportError:
     pass
 if cartopy_installed:
     from cartopy import feature
-    from numpy import arange,array,unique,diff,meshgrid,zeros,logical_or,any,where,ones
+    from numpy import arange,array,unique,diff,meshgrid,zeros,logical_or,any,where,ones,vstack,hstack,tile,isnan,NaN
     from scipy.interpolate import griddata
     from matplotlib.pyplot import figure
     from numpy.ma import getmaskarray,masked_where
+    from numpy.ma import vstack as mvstack
+    from numpy.ma import hstack as mhstack
+    from pdb import set_trace
 
     class oceanMap:
         def __init__(self,lon0=0.,prj=crs.PlateCarree,*args,**opts):
@@ -68,12 +71,43 @@ if cartopy_installed:
             return pcm,cb
 
         def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=0,mask=False,**opts):
+            Mask=getmaskarray(data)
+            if mask:
+                #check edges for mask otherwise add surrounding mask:
+                if not all(Mask[0,:]):
+                    Mask=vstack( (ones(Mask.shape[1],dtype=Mask.dtype),Mask) )
+                    data=mvstack( (NaN*ones(data.shape[1],dtype=data.dtype),data) )
+                    lon=vstack( (2*lon[0,:]-lon[1,:],lon) )
+                    lat=vstack( (2*lat[0,:]-lat[1,:],lat) )
+                if not all(Mask[-1,:]):
+                    Mask=vstack( (Mask,ones(Mask.shape[1],dtype=Mask.dtype)) )
+                    data=mvstack( (data,NaN*ones(data.shape[1],dtype=data.dtype)) )
+                    lon=vstack( (lon,2*lon[-1,:]-lon[-2,:]) )
+                    lat=vstack( (lat,2*lat[-1,:]-lat[-2,:]) )
+                if not all(Mask[:,0]):
+                    Mask=hstack( (ones(Mask.shape[0],dtype=Mask.dtype).reshape([Mask.shape[0],1]),Mask) )
+                    data=mhstack( (NaN*ones(data.shape[0],dtype=Mask.dtype).reshape([data.shape[0],1]),data) )
+                    lon=hstack( ((2*lon[:,0]-lon[:,1]).reshape([lon.shape[0],1]),lon) )
+                    lat=hstack( ((2*lat[:,0]-lat[:,1]).reshape([lat.shape[0],1]),lat) )
+                if not all(Mask[:,-1]):
+                    Mask=hstack( (Mask,ones(Mask.shape[0],dtype=Mask.dtype).reshape([Mask.shape[0],1])) )
+                    data=mhstack( (data,NaN*ones(data.shape[0],dtype=data.dtype).reshape([data.shape[0],1])) )
+                    lon=hstack( (lon,(2*lon[:,-1]-lon[:,-2]).reshape([lon.shape[0],1])) )
+                    lat=hstack( (lat,(2*lat[:,-1]-lat[:,-2]).reshape([lat.shape[0],1])) )
+                set_trace()
+                data=masked_where(isnan(data),data)
+                set_trace()
+            lat=lat.ravel()
+            lon=lon.ravel()
+            data=data.ravel()
+            Mask=getmaskarray(data)
+            set_trace()
+            xy=self.prj.transform_points(self.ref_prj,lon,lat)
             if zoom:
-                xy=self.prj.transform_points(self.ref_prj,lon.ravel(),lat.ravel())
                 xmin,xmax=xy[:,0].min(),xy[:,0].max()
                 ymin,ymax=xy[:,1].min(),xy[:,1].max()
-                Dx=xmin-xmax
-                Dy=ymin-ymax
+                Dx=xmax-xmin
+                Dy=ymax-ymin
                 xmin=xmin-(zoom-100.)/200.*Dx
                 xmax=xmax+(zoom-100.)/200.*Dx
                 ymax=ymax+(zoom-100.)/200.*Dy
@@ -87,19 +121,16 @@ if cartopy_installed:
             x=arange(xmin+.5*dx,xmax,dx)
             y=arange(ymin+.5*dy,ymax,dy)
             xx,yy=meshgrid(x,y)
-            lon=lon.ravel()
-            lat=lat.ravel()
-            data=data.ravel()
-            Mask=getmaskarray(data)
             if any(Mask):
-                lon=masked_where(Mask,lon).compressed()
-                lat=masked_where(Mask,lat).compressed()
+                xy=masked_where(tile(Mask,[2,1]).T,xy[:,:2])
+                xin=xy[:,0].compressed()
+                yin=xy[:,1].compressed()
                 data=data.compressed()
-            (lon,lat),unq_id=unique(array([lon,lat]),return_index=True,axis=1)
+            else:
+                xin=xy[:,0]
+                yin=xy[:,1]
+            (xin,yin),unq_id=unique(array([xin,yin]),return_index=True,axis=1)
             data=data[unq_id]
-            xy_trns=self.prj.transform_points(self.ref_prj,lon,lat)
-            xin=xy_trns[:,0]
-            yin=xy_trns[:,1]
             if len(args)==0 and "method" not in opts.keys():
                 opts["method"]="nearest"
             dxy=griddata((xin,yin),data,(xx.ravel(),yy.ravel()),*args,**opts)
@@ -112,9 +143,11 @@ if cartopy_installed:
             if any(globmask):
                 dmask=globmask
             if mask:
+                #add land frame around domain
                 (xm,ym),unq_id=unique(array([xy[:,0].ravel(),xy[:,1].ravel()]),return_index=True,axis=1)
                 uMask=1*Mask[unq_id]
-                dmask=logical_or(dmask,griddata((xm,ym),uMask,(xx.ravel(),yy.ravel()),*args,**opts))
+                mopts={k:v for k,v in opts.items() if k!="method"} #method option must be nearest for mask interpolation!
+                dmask=logical_or(dmask,griddata((xm,ym),uMask,(xx.ravel(),yy.ravel()),method="nearest",*args,**mopts))
             dxy=masked_where(dmask,dxy)
             if bounds:
                 xb=arange(xmin,xmax+.1*dx,dx)
@@ -129,8 +162,8 @@ if cartopy_installed:
             print("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.contourf(x,y,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
-        def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,method="nearest",**opts):
-            x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom,mask=mask,method=method)
+        def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
+            x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom,mask=mask)
             print("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
             print("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
