@@ -11,13 +11,10 @@ except ImportError:
     pass
 if cartopy_installed:
     from cartopy import feature
-    from numpy import arange,array,unique,diff,meshgrid,zeros,logical_or,any,where,ones,vstack,hstack,tile,isnan,NaN
+    from numpy import arange,array,unique,diff,meshgrid,zeros,logical_or,logical_not,any,where,ones,vstack,hstack,tile,isnan,NaN
     from scipy.interpolate import griddata
     from matplotlib.pyplot import figure
-    from numpy.ma import getmaskarray,masked_where
-    from numpy.ma import vstack as mvstack
-    from numpy.ma import hstack as mhstack
-    from pdb import set_trace
+    from numpy.ma import getmaskarray,masked_where,getdata
 
     class oceanMap:
         def __init__(self,lon0=0.,prj=crs.PlateCarree,*args,**opts):
@@ -71,37 +68,41 @@ if cartopy_installed:
             return pcm,cb
 
         def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=0,mask=False,**opts):
-            Mask=getmaskarray(data)
+            print("Interpolating field...")
+            Mask=logical_not(getmaskarray(data))
+            data=getdata(data)
             if mask:
                 #check edges for mask otherwise add surrounding mask:
-                if not all(Mask[0,:]):
-                    Mask=vstack( (ones(Mask.shape[1],dtype=Mask.dtype),Mask) )
-                    data=mvstack( (NaN*ones(data.shape[1],dtype=data.dtype),data) )
-                    lon=vstack( (2*lon[0,:]-lon[1,:],lon) )
-                    lat=vstack( (2*lat[0,:]-lat[1,:],lat) )
-                if not all(Mask[-1,:]):
-                    Mask=vstack( (Mask,ones(Mask.shape[1],dtype=Mask.dtype)) )
-                    data=mvstack( (data,NaN*ones(data.shape[1],dtype=data.dtype)) )
-                    lon=vstack( (lon,2*lon[-1,:]-lon[-2,:]) )
-                    lat=vstack( (lat,2*lat[-1,:]-lat[-2,:]) )
-                if not all(Mask[:,0]):
+                if any(Mask[:,0]):
+                    print("adding left wall...")
                     Mask=hstack( (ones(Mask.shape[0],dtype=Mask.dtype).reshape([Mask.shape[0],1]),Mask) )
-                    data=mhstack( (NaN*ones(data.shape[0],dtype=Mask.dtype).reshape([data.shape[0],1]),data) )
+                    data=hstack( (NaN*ones(data.shape[0],dtype=Mask.dtype).reshape([data.shape[0],1]),data) )
                     lon=hstack( ((2*lon[:,0]-lon[:,1]).reshape([lon.shape[0],1]),lon) )
                     lat=hstack( ((2*lat[:,0]-lat[:,1]).reshape([lat.shape[0],1]),lat) )
-                if not all(Mask[:,-1]):
+                if any(Mask[:,-1]):
+                    print("adding right wall...")
                     Mask=hstack( (Mask,ones(Mask.shape[0],dtype=Mask.dtype).reshape([Mask.shape[0],1])) )
-                    data=mhstack( (data,NaN*ones(data.shape[0],dtype=data.dtype).reshape([data.shape[0],1])) )
+                    data=hstack( (data,NaN*ones(data.shape[0],dtype=data.dtype).reshape([data.shape[0],1])) )
                     lon=hstack( (lon,(2*lon[:,-1]-lon[:,-2]).reshape([lon.shape[0],1])) )
                     lat=hstack( (lat,(2*lat[:,-1]-lat[:,-2]).reshape([lat.shape[0],1])) )
-                set_trace()
-                data=masked_where(isnan(data),data)
-                set_trace()
+                if any(Mask[0,:]):
+                    print("adding bottom wall...")
+                    Mask=vstack( (ones(Mask.shape[1],dtype=Mask.dtype),Mask) )
+                    data=vstack( (NaN*ones(data.shape[1],dtype=data.dtype),data) )
+                    lon=vstack( (2*lon[0,:]-lon[1,:],lon) )
+                    lat=vstack( (2*lat[0,:]-lat[1,:],lat) )
+                if any(Mask[-1,:]):
+                    print("adding top wall...")
+                    Mask=vstack( (Mask,ones(Mask.shape[1],dtype=Mask.dtype)) )
+                    data=vstack( (data,NaN*ones(data.shape[1],dtype=data.dtype)) )
+                    lon=vstack( (lon,2*lon[-1,:]-lon[-2,:]) )
+                    lat=vstack( (lat,2*lat[-1,:]-lat[-2,:]) )
+                Mask=where(isnan(data),False,Mask)
+                print("Mask prepared...")
             lat=lat.ravel()
             lon=lon.ravel()
             data=data.ravel()
-            Mask=getmaskarray(data)
-            set_trace()
+            Mask=Mask.ravel()
             xy=self.prj.transform_points(self.ref_prj,lon,lat)
             if zoom:
                 xmin,xmax=xy[:,0].min(),xy[:,0].max()
@@ -121,11 +122,11 @@ if cartopy_installed:
             x=arange(xmin+.5*dx,xmax,dx)
             y=arange(ymin+.5*dy,ymax,dy)
             xx,yy=meshgrid(x,y)
-            if any(Mask):
-                xy=masked_where(tile(Mask,[2,1]).T,xy[:,:2])
-                xin=xy[:,0].compressed()
-                yin=xy[:,1].compressed()
-                data=data.compressed()
+            if not all(Mask):
+                print("Compressing...")
+                xin=xy[:,0].compress(Mask)
+                yin=xy[:,1].compress(Mask)
+                data=data.compress(Mask)
             else:
                 xin=xy[:,0]
                 yin=xy[:,1]
@@ -143,12 +144,15 @@ if cartopy_installed:
             if any(globmask):
                 dmask=globmask
             if mask:
-                #add land frame around domain
+                print("removing duplicate points from Mask....")
                 (xm,ym),unq_id=unique(array([xy[:,0].ravel(),xy[:,1].ravel()]),return_index=True,axis=1)
-                uMask=1*Mask[unq_id]
-                mopts={k:v for k,v in opts.items() if k!="method"} #method option must be nearest for mask interpolation!
-                dmask=logical_or(dmask,griddata((xm,ym),uMask,(xx.ravel(),yy.ravel()),method="nearest",*args,**mopts))
+                uMask=1.*logical_not(Mask[unq_id])
+                print("Interpolating Mask...")
+                mopts={k:v for k,v in opts.items() if k!="method"} #prescribe linear option for mask interpolation
+                iMask=where(griddata((xm,ym),uMask,(xx.ravel(),yy.ravel()),method="linear",*args,**mopts)>.99,True,False)
+                dmask=logical_or(dmask,iMask)
             dxy=masked_where(dmask,dxy)
+            print("Interpolation done.")
             if bounds:
                 xb=arange(xmin,xmax+.1*dx,dx)
                 yb=arange(ymin,ymax+.1*dy,dy)
