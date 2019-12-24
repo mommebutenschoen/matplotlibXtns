@@ -177,7 +177,7 @@ if cartopy_installed:
             oceanMap.__init__(self,lon0=lon0,prj=prj,*args,**opts)
 
     class regionalOceanMap(oceanMap):
-        def __init__(self,lon0=0.,lat0=0.,prj=crs.AlbersEqualArea,*args,**opts):
+        def __init__(self,lon0=0.,lat0=0.,prj=crs.AlbersEqualArea,**opts):
             if type(prj)==str:
                 if prj.lower().strip()=="albersequalarea":
                     prj=crs.AlbersEqualArea
@@ -198,12 +198,16 @@ if cartopy_installed:
                     latmin,latma=min(lat0),max(lat0)
                 lat0=.5*(latmax+latmin)
                 dlat=latmax-latmin
+            else:
+                dlat=0
             if prj==crs.AlbersEqualArea:
                 print("Initialising regional AlbersEqualArea projection centred at {}N,{}E".format(lat0,lon0))
-                self.prj=prj(central_longitude=lon0,central_latitude=lat0,standard_parallels=(lat0-dlat*.45,lat0+dlat*45),*args,**opts)
+                if dlat and "standard_parallels" not in opts.keys():
+                    opts["standard_paralells"]=(lat0-dlat*.45,lat0+dlat*.45)
+                self.prj=prj(central_longitude=lon0,central_latitude=lat0,**opts)
             else:
                 print("Initialising regional PlateCarree projection centred at {}E".format(lon0))
-                self.prj=prj(lon0,*args,**opts)
+                self.prj=prj(lon0,**opts)
             self.ref_prj=crs.PlateCarree()
 
         def interpolated_contourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=101,**opts):
