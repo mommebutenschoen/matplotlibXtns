@@ -203,7 +203,7 @@ if cartopy_installed:
             if prj==crs.AlbersEqualArea:
                 print("Initialising regional AlbersEqualArea projection centred at {}N,{}E".format(lat0,lon0))
                 if dlat and "standard_parallels" not in opts.keys():
-                    opts["standard_paralells"]=(lat0-dlat*.45,lat0+dlat*.45)
+                    opts["standard_parallels"]=(lat0-dlat*.45,lat0+dlat*.45)
                 self.prj=prj(central_longitude=lon0,central_latitude=lat0,**opts)
             else:
                 print("Initialising regional PlateCarree projection centred at {}E".format(lon0))
