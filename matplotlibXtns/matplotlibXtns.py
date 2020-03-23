@@ -3,8 +3,8 @@ try:
     from itertools import izip as zip
 except ImportError:
     pass
-from numpy import zeros,array,arange,ones,compress,diff,empty,fliplr,tile
-from matplotlib.pyplot import colorbar,boxplot,plot,get_cmap,fill_between,contourf
+from numpy import zeros,array,arange,ones,compress,diff,empty,fliplr,tile,sign,abs
+from matplotlib.pyplot import colorbar,boxplot,plot,get_cmap,fill_between,contourf,figure
 try:
    from pyproj import Geod
    pyprojFlag=True
@@ -13,24 +13,74 @@ except:
    pyprojFlag=False
 from matplotlib.colors import ColorConverter,LinearSegmentedColormap,to_rgb
 from scipy.stats.mstats import mquantiles
+from scipy.special import erf
 from operator import itemgetter
+from matplotlib.ticker import MaxNLocator,AutoLocator
+
+#depthfun = lambda z: z**4/(z**3-2500**3) #assuming negative z
+depthfun = lambda z: (1./z-1.)*z #assuming negative z
+class surface_zoom:
+    """Class with depth transformation function for zooming towards the
+    ocean surface and its inverse in order to provide tick lables.
+    Assumes negative z values."""
+
+    def __init__(self,n=3):
+        """Defines polyniomial mapping of vertical levels of the form:
+        (z**1/n), where n can be chosen by the user.
+        Args:
+            n(intger): exponent of mapping function (default:3)
+        """
+        self._n=n
+
+    __func__ = lambda self,z: sign(z)*abs(z)**(1./float(self._n))
+
+    inv = lambda self,z: sign(z)*abs(z)**(float(self._n))
+
+    def __call__(self,z):
+        """Transformation of array of depth levels.
+        Args:
+            z(array of floats): original depth values."""
+        return self.__func__(z)
 
 def discretizeColormap(colmap,N):
    cmaplist = [colmap(i) for i in range(colmap.N)]
    return colmap.from_list('Custom discrete cmap', cmaplist, N)
 
-def hovmoeller(t,dz,Var,contours=10,ztype="dz",orientation="up",**opts):
+class hovmoeller:
+  def __init__(self,t,dz,Var,contours=10,ztype="z",orientation="up",surface_zoom=True,
+        zoom_obj=surface_zoom(),ax=0,**opts):
+    self.zoom=zoom_obj
     if ztype=="dz": #z-variable gives zell thickness, else cell centre
       if dz.ndim==1:
         dz=tile(dz,[t.shape[0],1])
       z=-dz.cumsum(1)+.5*dz
     else:
       z=dz
+      if dz.ndim==1:
+        z=tile(z,[t.shape[0],1])
+    if surface_zoom:
+        z_orig=z
+        z=self.zoom(z)
+        print(z[0],z_orig[0])
     if orientation is not "up":
         Var=fliplr(Var)
     if t.ndim==1:
         t=tile(t,[z.shape[1],1]).T
-    contourf(t.T,z.T,Var.T,contours,**opts)
+    if not ax:
+        ax=figure().add_subplot(111)
+    ctr=ax.contourf(t.T,z.T,Var.T,contours,**opts)
+    ax.yaxis.set_major_locator(AutoLocator())
+    #ticks=ax.yaxis.get_major_locator().tick_values(z_orig.min(),z_orig.max())
+    #ax.yaxis.set_ticks(zoom_obj(ticks))
+    ticks=ax.get_yticks()
+    ax.yaxis.set_ticklabels(["{}".format(self.zoom.inv(t)) for t in ticks])
+    self.ax=ax
+    self.contours=ctr
+
+  def set_ticks(self,ticks,ticklables=()):
+    self.ax.yaxis.set_ticks(self.zoom(ticks))
+    self.ax.yaxis.set_ticklabels("{}".format(t) for t in ticks)
+
 
 def cmap_map(function,cmap):
     """ Applies function (which should operate on vectors of shape 3:
