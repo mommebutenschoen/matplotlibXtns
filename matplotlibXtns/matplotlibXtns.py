@@ -48,7 +48,7 @@ def discretizeColormap(colmap,N):
 
 class hovmoeller:
   def __init__(self,t,dz,Var,contours=10,ztype="z",orientation="up",surface_zoom=True,
-        zoom_obj=surface_zoom(),ax=0,**opts):
+        zoom_obj=surface_zoom(),ax=0,lineopts={},**opts):
     self.zoom=zoom_obj
     if ztype=="dz": #z-variable gives zell thickness, else cell centre
       if dz.ndim==1:
@@ -68,14 +68,15 @@ class hovmoeller:
         t=tile(t,[z.shape[1],1]).T
     if not ax:
         ax=figure().add_subplot(111)
-    ctr=ax.contourf(t.T,z.T,Var.T,contours,**opts)
+    self.contours=ax.contourf(t.T,z.T,Var.T,contours,**opts)
+    if lineopts:
+        self.contourlines=ax.contour(t.T,z.T,Var.T,contours,**lineopts)
     ax.yaxis.set_major_locator(AutoLocator())
     #ticks=ax.yaxis.get_major_locator().tick_values(z_orig.min(),z_orig.max())
     #ax.yaxis.set_ticks(zoom_obj(ticks))
     ticks=ax.get_yticks()
     ax.yaxis.set_ticklabels(["{}".format(self.zoom.inv(t)) for t in ticks])
     self.ax=ax
-    self.contours=ctr
 
   def set_ticks(self,ticks,ticklables=()):
     self.ax.yaxis.set_ticks(self.zoom(ticks))
