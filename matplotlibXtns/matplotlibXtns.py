@@ -79,7 +79,10 @@ class hovmoeller:
 
   def set_ticks(self,ticks,ticklables=()):
     self.ax.yaxis.set_ticks(self.zoom(ticks))
-    self.ax.yaxis.set_ticklabels("{}".format(t) for t in ticks)
+    if ticklables:
+        self.ax.yaxis.set_ticklabels(ticklables)
+    else:
+        self.ax.yaxis.set_ticklabels("{}".format(t) for t in ticks)
 
 
 def cmap_map(function,cmap):
