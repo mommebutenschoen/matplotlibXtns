@@ -1,9 +1,9 @@
-from __future__ import print_function
+import logging
 try:
     from cartopy import crs
     cartopy_installed=True
 except ImportError:
-    print("Cartopy module not found. This matplotlibXtns install excludes cartopy functionality.")
+    logging.warning("Cartopy module not found. This matplotlibXtns install excludes cartopy functionality.")
     cartopy_installed=False
 try:
     from itertools import izip as zip
@@ -33,7 +33,7 @@ if cartopy_installed:
                 elif prj.lower().strip()=="platecarree":
                     prj=crs.PlateCarree
                 else:
-                    print("{} projection not implemented, using Mollweide instead...".format(prj))
+                    logging.warning("{} projection not implemented, using Mollweide instead...".format(prj))
                     prj=crs.Mollweide
             self.prj=prj(lon0,*args,**opts)
             self.ref_prj=crs.PlateCarree()
@@ -47,7 +47,7 @@ if cartopy_installed:
             cnt=ax.contourf(x,y,*args,**opts,zorder=-1)
             ax.coastlines(land_res)
             if land_colour:
-                print("Filling continents")
+                logging.info("Filling continents")
                 ax.add_feature(feature.NaturalEarthFeature('physical', 'land', land_res,
                                         facecolor=land_colour))
             #ax.set_extent([xmin,xmax,ymin,ymax])
@@ -68,37 +68,37 @@ if cartopy_installed:
             return pcm,cb
 
         def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=0,mask=False,**opts):
-            print("Interpolating field...")
+            logging.info("Interpolating field...")
             Mask=logical_not(getmaskarray(data))
             data=getdata(data)
             if mask:
                 #check edges for mask otherwise add surrounding mask:
                 if any(Mask[:,0]):
-                    print("adding left wall...")
+                    logging.info("adding left wall...")
                     Mask=hstack( (ones(Mask.shape[0],dtype=Mask.dtype).reshape([Mask.shape[0],1]),Mask) )
                     data=hstack( (NaN*ones(data.shape[0],dtype=Mask.dtype).reshape([data.shape[0],1]),data) )
                     lon=hstack( ((2*lon[:,0]-lon[:,1]).reshape([lon.shape[0],1]),lon) )
                     lat=hstack( ((2*lat[:,0]-lat[:,1]).reshape([lat.shape[0],1]),lat) )
                 if any(Mask[:,-1]):
-                    print("adding right wall...")
+                    logging.info("adding right wall...")
                     Mask=hstack( (Mask,ones(Mask.shape[0],dtype=Mask.dtype).reshape([Mask.shape[0],1])) )
                     data=hstack( (data,NaN*ones(data.shape[0],dtype=data.dtype).reshape([data.shape[0],1])) )
                     lon=hstack( (lon,(2*lon[:,-1]-lon[:,-2]).reshape([lon.shape[0],1])) )
                     lat=hstack( (lat,(2*lat[:,-1]-lat[:,-2]).reshape([lat.shape[0],1])) )
                 if any(Mask[0,:]):
-                    print("adding bottom wall...")
+                    logging.info("adding bottom wall...")
                     Mask=vstack( (ones(Mask.shape[1],dtype=Mask.dtype),Mask) )
                     data=vstack( (NaN*ones(data.shape[1],dtype=data.dtype),data) )
                     lon=vstack( (2*lon[0,:]-lon[1,:],lon) )
                     lat=vstack( (2*lat[0,:]-lat[1,:],lat) )
                 if any(Mask[-1,:]):
-                    print("adding top wall...")
+                    logging.info("adding top wall...")
                     Mask=vstack( (Mask,ones(Mask.shape[1],dtype=Mask.dtype)) )
                     data=vstack( (data,NaN*ones(data.shape[1],dtype=data.dtype)) )
                     lon=vstack( (lon,2*lon[-1,:]-lon[-2,:]) )
                     lat=vstack( (lat,2*lat[-1,:]-lat[-2,:]) )
                 Mask=where(isnan(data),False,Mask)
-                print("Mask prepared...")
+                logging.info("Mask prepared...")
             lat=lat.ravel()
             lon=lon.ravel()
             data=data.ravel()
@@ -123,7 +123,7 @@ if cartopy_installed:
             y=arange(ymin+.5*dy,ymax,dy)
             xx,yy=meshgrid(x,y)
             if not all(Mask):
-                print("Compressing...")
+                logging.info("Compressing...")
                 xin=xy[:,0].compress(Mask)
                 yin=xy[:,1].compress(Mask)
                 data=data.compress(Mask)
@@ -144,15 +144,15 @@ if cartopy_installed:
             if any(globmask):
                 dmask=globmask
             if mask:
-                print("removing duplicate points from Mask....")
+                logging.info("removing duplicate points from Mask....")
                 (xm,ym),unq_id=unique(array([xy[:,0].ravel(),xy[:,1].ravel()]),return_index=True,axis=1)
                 uMask=1.*logical_not(Mask[unq_id])
-                print("Interpolating Mask...")
+                logging.info("Interpolating Mask...")
                 mopts={k:v for k,v in opts.items() if k!="method"} #prescribe linear option for mask interpolation
                 iMask=where(griddata((xm,ym),uMask,(xx.ravel(),yy.ravel()),method="linear",*args,**mopts)>.99,True,False)
                 dmask=logical_or(dmask,iMask)
             dxy=masked_where(dmask,dxy)
-            print("Interpolation done.")
+            logging.info("Interpolation done.")
             if bounds:
                 xb=arange(xmin,xmax+.1*dx,dx)
                 yb=arange(ymin,ymax+.1*dy,dy)
@@ -162,14 +162,14 @@ if cartopy_installed:
 
         def interpolated_contourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
             x,y,d=self.interpolate(lon,lat,data,res=res,zoom=zoom,mask=mask,method=method)
-            print("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
-            print("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
+            logging.info("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
+            logging.info("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.contourf(x,y,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
         def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
             x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom,mask=mask)
-            print("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
-            print("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
+            logging.info("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
+            logging.info("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
     class globalOceanMap(oceanMap):
@@ -184,7 +184,7 @@ if cartopy_installed:
                 elif prj.lower().strip()=="platecarree":
                     prj=crs.PlateCarree
                 else:
-                    print("{} projection not implemented, using AlbersEqualArea instead...".format(prj))
+                    logging.warning("{} projection not implemented, using AlbersEqualArea instead...".format(prj))
                     prj=crs.AlbersEqualArea
             if array(lon0).ndim>0:
                 try:
@@ -201,12 +201,12 @@ if cartopy_installed:
             else:
                 dlat=0
             if prj==crs.AlbersEqualArea:
-                print("Initialising regional AlbersEqualArea projection centred at {}N,{}E".format(lat0,lon0))
+                logging.info("Initialising regional AlbersEqualArea projection centred at {}N,{}E".format(lat0,lon0))
                 if dlat and "standard_parallels" not in opts.keys():
                     opts["standard_parallels"]=(lat0-dlat*.45,lat0+dlat*.45)
                 self.prj=prj(central_longitude=lon0,central_latitude=lat0,**opts)
             else:
-                print("Initialising regional PlateCarree projection centred at {}E".format(lon0))
+                logging.info("Initialising regional PlateCarree projection centred at {}E".format(lon0))
                 self.prj=prj(lon0,**opts)
             self.ref_prj=crs.PlateCarree()
 

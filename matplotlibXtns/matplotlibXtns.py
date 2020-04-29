@@ -1,4 +1,3 @@
-from __future__ import print_function
 try:
     from itertools import izip as zip
 except ImportError:
@@ -9,13 +8,14 @@ try:
    from pyproj import Geod
    pyprojFlag=True
 except:
-   print("Could not import pyproj")
+   logging.warning("Could not import pyproj")
    pyprojFlag=False
 from matplotlib.colors import ColorConverter,LinearSegmentedColormap,to_rgb
 from scipy.stats.mstats import mquantiles
 from scipy.special import erf
 from operator import itemgetter
 from matplotlib.ticker import MaxNLocator,AutoLocator
+import logging
 
 #depthfun = lambda z: z**4/(z**3-2500**3) #assuming negative z
 depthfun = lambda z: (1./z-1.)*z #assuming negative z
@@ -61,7 +61,7 @@ class hovmoeller:
     if surface_zoom:
         z_orig=z
         z=self.zoom(z)
-        print(z[0],z_orig[0])
+        logging.info(z[0],z_orig[0])
     if orientation is not "up":
         Var=fliplr(Var)
     if t.ndim==1:
@@ -342,7 +342,7 @@ def asymmetric_divergent_cmap(point0,colorlow="xkcd:reddish",colorhigh="xkcd:pet
 
 def asymmetric_cmap_around_zero(vmin,vmax,**opts):
     """Construct LinearSegmentedColormap with linear gradient between end point colors and midcolors,
-    where the mid-point is set at 0 in between vmin and vmax. Calls asymmetric_divergent_cmap print_function
+    where the mid-point is set at 0 in between vmin and vmax. Calls asymmetric_divergent_cmap
     to generate colormap.
 
     Args:
@@ -403,8 +403,8 @@ def findXYDuplicates(x,y,d,preserveMask=False):
        d: data defined on x,y (1d-array)
     Returns sorted x,y,d and duplicate mask (0 where duplicate)"""
     if not len(x)==len(y)==len(d):
-      print("Longitude, Lattitude and data size don't match:")
-      print("  Lon: "+str(len(x))+" Lat: "+str(len(y))+" Data: "+str(len(d)))
+      logging.warning("Longitude, Lattitude and data size don't match:")
+      logging.warning("  Lon: "+str(len(x))+" Lat: "+str(len(y))+" Data: "+str(len(d)))
       return
     l=len(x)
     duplMask=ones(l)
@@ -442,7 +442,7 @@ def removeXYDuplicates(x,y,d,mask=False):
         d=compress(Mask,d)
         x=compress(Mask,x)
         y=compress(Mask,y)
-        print("Duplicate points removed in x/y map...")
+        logging.info("Duplicate points removed in x/y map...")
     return x,y,d
 
 def plotSmallDataRange(x,ycentre,yupper,ylower,linetype='-',color='r',fillcolor="0.8",edgecolor='k',alpha=1.,**args):

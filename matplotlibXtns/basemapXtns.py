@@ -1,10 +1,9 @@
-from __future__ import print_function
-
+import logging
 try:
     from mpl_toolkits.basemap import Basemap
     basemap_installed=True
 except ImportError:
-    print("Basemap module not found. This matplotlibXtns install excludes basemap functionality.")
+    logging.warning("Basemap module not found. This matplotlibXtns install excludes basemap functionality.")
     basemap_installed=False
 
 if basemap_installed:
@@ -61,7 +60,7 @@ if basemap_installed:
   def pixeliseIrregularData(m,lon2D,lat2D,data):
     lsm,dim=getLSMask(m)
     #lsm=ma.masked_where(lsm==1,lsm,copy=False).mask
-    print("Resolution: "+str(dim))
+    logging.info("Resolution: "+str(dim))
     ax=gca()
     x,y,d=mapData(m,lon2D.ravel(),lat2D.ravel(),data.ravel())
     xfi=linspace(ax.axis()[0],ax.axis()[1],dim[1]+1)
@@ -70,13 +69,13 @@ if basemap_installed:
     yci=diff(yfi)/2.+yfi[:-1]
     xfi2D,yfi2D=meshgrid(xfi,yfi)
     #xci2D,yci2D=meshgrid(xci,yci)
-    print("interpolating...")
+    logging.info("interpolating...")
     di=griddata(x,y,d,xci,yci,interp='linear')
     #lon2D=where(lon2D<lonll,lon2D+360.,lon2D)
     #dd=pixeliseGrid(m,lon2D,lat2D,data,dim,lonll,latll,lonur,latur)
     #lon2D=where(lon2D>180,lon2D-360.,lon2D)
     #di=mapScalar(m,dd,lonll,latll,lonur,latur)
-    print("Mapped data: "+str(di.shape))
+    logging.info("Mapped data: "+str(di.shape))
     #di.mask=ma.make_mask(lsm|di.mask)
     return xfi2D,yfi2D,di
 
@@ -147,7 +146,7 @@ if basemap_installed:
      yfi=linspace(ax.axis()[2],ax.axis()[3],yres+1)
      xci=diff(xfi)/2.+xfi[:-1]
      yci=diff(yfi)/2.+yfi[:-1]
-     print('\t...interpolating on ',xres,'x',yres,' grid...')
+     logging.info('\t...interpolating on ',xres,'x',yres,' grid...')
      xfi2D,yfi2D=meshgrid(xfi,yfi)
      #xci2D,yci2D=meshgrid(xci,yci)
      #if mask:
@@ -178,7 +177,7 @@ if basemap_installed:
      xci=diff(xfi)/2.+xfi[:-1]
      yci=diff(yfi)/2.+yfi[:-1]
      xfi[0]=xfi[0]+1.e-5
-     print('\t...interpolating on ',xres,'x',yres,' grid...')
+     logging.info('\t...interpolating on ',xres,'x',yres,' grid...')
      xfi2D,yfi2D=meshgrid(xfi,yfi)
      di=griddata(lon,lat,data,xci,yci,interp="linear")
      xci,yci=meshgrid(xci,yci)
@@ -215,7 +214,7 @@ if basemap_installed:
      xci=diff(xfi)/2.+xfi[:-1]
      yci=diff(yfi)/2.+yfi[:-1]
      xfi[0]=xfi[0]+1.e-5
-     print('\t...interpolating on ',xres,'x',yres,' grid...')
+     logging.info('\t...interpolating on ',xres,'x',yres,' grid...')
      xfi2D,yfi2D=meshgrid(xfi,yfi)
      #di=griddata(lon.ravel(),lat.ravel(),data.ravel(),xci,yci)
      xci,yci=meshgrid(xci,yci)
@@ -252,7 +251,7 @@ if basemap_installed:
      xci=diff(xfi)/2.+xfi[:-1]
      yci=diff(yfi)/2.+yfi[:-1]
      xfi[0]=xfi[0]+1.e-5
-     print('\t...interpolating on ',xres,'x',yres,' grid...')
+     logging.info('\t...interpolating on ',xres,'x',yres,' grid...')
      xfi2D,yfi2D=meshgrid(xfi,yfi)
      #di=griddata(lon.ravel(),lat.ravel(),data.ravel(),xci,yci)
      xci,yci=meshgrid(xci,yci)
