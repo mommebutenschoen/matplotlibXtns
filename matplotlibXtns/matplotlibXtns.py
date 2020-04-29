@@ -115,21 +115,6 @@ def cmap_map(function,cmap):
         cdict[key] = colorvector
     return LinearSegmentedColormap('colormap',cdict,1024)
 
-def flipColorMap(cmapStr):
-    if type(cmapStr)==type(str()):
-      cdata=get_cmap(cmapStr)._segmentdata
-    else:
-      cdata=cmapStr._segmentdata
-      cmapStr=cmapStr.name
-    cd={}
-    cd['blue']=[(1-line[0],line[1],line[2]) for line in cdata['blue']]
-    cd['green']=[(1-line[0],line[1],line[2]) for line in cdata['green']]
-    cd['red']=[(1-line[0],line[1],line[2]) for line in cdata['red']]
-    cd['red'].reverse()
-    cd['blue'].reverse()
-    cd['green'].reverse()
-    return LinearSegmentedColormap(cmapStr+'Flipped',cd,256)
-
 def discreteColors(noc,cols=['r','b','#FFF000','g','m','c','#FF8000','#400000','#004040','w','b']):
     while noc>len(cols): cols.extend(cols)
     cc=ColorConverter()
@@ -158,11 +143,6 @@ def discreteGreys(nog):
     dg=1./(nog-1)
     greys=[str(g) for g in arange(0,1+dg*.1,dg)]
     return discreteColors(nog,greys)
-
-chlMap=LinearSegmentedColormap('chlMap',
-    {'blue':((0.,.1,.1),(.85,.8,.8),(1.,.95,.95)),
-    'green':((0.,0.,0.),(.1,0.,0.),(.85,.8,.8),(1.,1.,1.)),
-    'red':((0.,0.,0.),(.75,0.,0.),(1.,.5,.5))}, N=256)
 
 def chlMapFun(Nlev=256):
     return LinearSegmentedColormap('chlMap',
@@ -225,92 +205,6 @@ pmLightMap=LinearSegmentedColormap('pmLightMap',
     'green':((0.,.0,.0),(.495,.9,.9),(.5,1.,1.),(.505,1.,1.),(1.,1.,1.)),
     'red':((0.,1.,1.),(.495,1.,1.),(.5,1.,1.),(.505,.9,.9),(1.,.0,.0))}, N=256)
 
-def pdfMap(fnct):
-    b=[(0.,1.,1.),(.05,1.,1.),]
-    r=[(0.,1.,1.),(.05,1.,.9),]
-    g=[(0.,1.,1.),(.05,1.,.95),]
-    N=5
-    #for vpos,cpos in zip(arange(.1,1.,.05),arange(1.-1./19.,0.,-1./19.)):
-    for n in arange(1,N):
-        vpos=.05+n/(N*.95)
-        cpos=1.-n/(1.*N)
-        fac=fnct(cpos)
-        b.append((vpos,fac,fac))
-        r.append((vpos,.9*fac,.9*fac))
-        g.append((vpos,.95*fac,.95*fac))
-    b.append((1.,0.,0.))
-    r.append((1.,0.,0.))
-    g.append((1.,0.,0.))
-    return LinearSegmentedColormap('pdfMap',{'blue':tuple(b),
-        'red':tuple(r),'green':tuple(g)})
-
-
-def pmMap(brightness=.5):
-    b=brightness
-    cmap=LinearSegmentedColormap('pmMap',
-     {'blue':((0.,.0,.0),(.495,.9,.9),(.5,1.,1.),(.505,.9,.9),(1.,.0,.0)),
-    'green':((0.,.0,.0),(.495,.9,.9),(.5,1.,1.),(.505,.9,.9),(1.,b,b)),
-    'red':((0.,b,b),(.495,.9,.9),(.5,1.,1.),(.505,.9,.9),(1.,.0,.0))}, N=256)
-    return cmap
-
-def pmMapDiscrete(clevels=9,brightness=.5):
-    b=brightness
-    hcl=int(clevels)/2
-    cls=[]
-    incr=1./hcl
-    frac=incr/2.
-    for n in range(hcl):
-        cls.append((b+(.9-b)*frac,.9*frac,.9*frac))
-        frac+=incr
-    if clevels%2: cls.append((1.,1.,1.))
-    frac=incr/2.
-    for n in range(hcl):
-        cls.append((.9-.9*frac,.9-(.9-b)*frac,.9-.9*frac))
-        frac+=incr
-    return discreteColors(clevels,cls)
-
-def brMapDiscrete(clevels=5,brightness=.4):
-    b=brightness
-    hcl=int(clevels)
-    cls=[]
-    incr=1./(hcl-1.)
-    frac=0.
-    for n in range(hcl):
-        cls.append([frac,frac,b+(1.-b)*frac]) #shades of blue
-        frac+=incr
-        frac=min(1,frac)
-    frac=0.
-    for n in range(hcl):
-        cls.append([1.-(1.-b)*frac,1.-frac,1.-frac])  #shades of red
-        frac+=incr
-        frac=min(1,frac)
-    return discreteColors(2*clevels,cls)
-
-def rgMapDiscrete(clevels=5,brightness=.3):
-    b=brightness
-    hcl=int(clevels)
-    cls=[]
-    incr=1./(hcl-1.)
-    frac=0.
-    for n in range(hcl):
-        cls.append([b+(1-b)*frac,frac,frac,]) #shades of red
-        frac+=incr
-        frac=min(1,frac)
-    frac=0.
-    for n in range(hcl):
-        cls.append([1-frac,1-(1.-b)*frac,1-frac,])  #shades of green
-        frac+=incr
-        frac=min(1,frac)
-    return discreteColors(2*clevels,cls)
-
-def mlMap(brightness=.5):
-    b=brightness
-    cmap=LinearSegmentedColormap('mlMap',
-     {'red':((0.,.0,.0),(.495,.75,.75),(.5,1.,1.),(.505,.75,.75),(1.,b,b)),
-    'green':((0.,.0,.0),(.495,.75,.75),(.5,1.,1.),(.505,.75,.75),(1.,b,b)),
-    'blue':((0.,b,b),(.495,.75,.75),(.5,1.,1.),(.505,.75,.75),(1.,.0,.0))}, N=256)
-    return cmap
-
 def asymmetric_divergent_cmap(point0,colorlow="xkcd:reddish",colorhigh="xkcd:petrol",color0_low="w",color0_up=0,n=256):
     """Construct LinearSegmentedColormap with linear gradient between end point colors and midcolors,
     where the mid-point may be moved to any relative position in between 0 and 1.
@@ -362,34 +256,6 @@ def asymmetric_cmap_around_zero(vmin,vmax,**opts):
         p0=0.
     cm=asymmetric_divergent_cmap(p0,**opts)
     return {"cmap":cm,"vmin":vmin,"vmax":vmax}
-
-def getAxPixel(ax):
-    "gets the pixel size of a subplpot axes instance"
-    fpx=figPixel(ax.get_figure())
-    return (ax.get_position().size*fpx).astype(int)
-
-def convertGridT2U(lon,lat):
-    lon2D=zeros([lon.shape[0]+1,lon.shape[1]+1])
-    lat2D=zeros([lat.shape[0]+1,lat.shape[1]+1])
-    dlon=diff(lon)/2.
-    dlat=diff(lat,axis=0)/2.
-    lon2D[1:,1:-1]=lon[:,:-1]+dlon
-    lat2D[1:-1,1:]=lat[:-1,:]+dlat
-    lon2D[1:,0]=lon[:,0]-dlon[:,0]
-    lon2D[1:,-1]=lon[:,-1]+dlon[:,-1]
-    lat2D[0,1:]=lat[0,:]-dlat[0,:]
-    lat2D[-1,1:]=lat[-1,:]+dlat[-1,:]
-    dlon=diff(lon2D[1:,:],axis=0)
-    lon2D[1:-1,:]=lon2D[1:-1,:]+dlon/2.
-    lon2D[0,:]=lon2D[1,:]-dlon[0,:]
-    lon2D[-1,:]=lon2D[-2,:]+dlon[-1,:]
-    dlat=diff(lat2D[:,1:])
-    lat2D[:,1:-1]=lat2D[:,1:-1]+dlat/2.
-    lat2D[:,0]=lat2D[:,1]-dlat[:,0]
-    lat2D[:,-1]=lat2D[:,-2]+dlat[:,-1]
-    return lon2D,lat2D
-
-figPixel=lambda f: f.get_size_inches()*f.get_dpi()
 
 if pyprojFlag:
    def getDistance(lon1,lat1,lon2,lat2,geoid='WGS84'):
@@ -477,46 +343,6 @@ def plotSpread(y,data,range=1,**opts):
     else:
         plotSmallDataRange(y,a[1],a[0],a[2],**opts)
 
-def Faces(CC):
-    """Computes faces vector (dimension n+1) from regular
-    cell centre vector (dimension n)"""
-    cc=CC.ravel()
-    f=empty(cc.shape[0]+1)
-    f[:-1]=cc-.5*diff(cc)[0]
-    f[-1]=CC[-1]+.5*diff(CC)[0]
-    return f
-
-def bnd2faces(bnd,):
-    if len(bnd.shape)==2:
-        return append(bnd[:,0],bnd[-1,1])
-    else:
-        faces=append(bnd[:,:,0],bnd[:,-1,1].reshape([-1,1]),axis=1)
-        return append(faces,append(bnd[-1,:,3],bnd[-1,-1,2].reshape([1,1])).reshape([1,-1]),axis=0)
-
-qclim = lambda data,clfun,qrange=[.01,.99]:clfun(mquantiles(data,prob=qrange))
-
-def climits(s,lim=.01):
-    """Computes color limits on the base of linear extension of the (lim,1-lim) quantile range to the full range. This produces more equilibrated color limits by oversaturating extreme values."""
-    lim*=.5
-    cmin,cmax=mquantiles(s,[lim,1.-lim])
-    dc=cmax-cmin
-    dl=dc/(1.-2.*lim)*lim
-    cmin-=lim*(dc+2.*lim)
-    cmax+=lim*(dc+2.*lim)
-    return cmin,cmax
-
-def quantPlot(data,notch=True,prob=[.01,.05,.95,.99,],**opts):
-    b=boxplot(data,notch=notch,sym="",whis=0.,**opts)
-    for n,d in enumerate(data):
-      lb=b['boxes'][n].get_data()[1][0]
-      ub=b['boxes'][n].get_data()[1][5]
-      a=mquantiles(d,prob=prob)
-      plot([n+1,n+1,],[a[1],lb],'k:',markerfacecolor='b',**opts)
-      plot([n+1,n+1,],[ub,a[2]],'k:',markerfacecolor='b',**opts)
-      plot([n+1,n+1,],[a[1],a[2]],'kd',markerfacecolor='b',**opts)
-      #plot([n+1,],[array(d).min()],'k',marker=6,**opts)
-      #plot([n+1,],[array(d).max()],'k',marker=7,**opts)
-    return b
 
 
 def hcolorbar(shrink=0.5,pad=.05,**opts):
