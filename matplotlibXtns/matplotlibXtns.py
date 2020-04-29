@@ -27,6 +27,7 @@ class surface_zoom:
     def __init__(self,n=3):
         """Defines polyniomial mapping of vertical levels of the form:
         (z**1/n), where n can be chosen by the user.
+
         Args:
             n(intger): exponent of mapping function (default:3)
         """
@@ -43,12 +44,48 @@ class surface_zoom:
         return self.__func__(z)
 
 def discretizeColormap(colmap,N):
+   """Constructs colormap with N discrete color levels from continous map.
+
+   Args:
+      colmap(matplotlib.colors.colormap or derived object): colormap from which
+        to pick discrete colours;
+      N (integer): number of colour levels
+
+   Returns:
+     discrete colormap (matplotlib.colors.LinearSegmentedColormap).
+   """
    cmaplist = [colmap(i) for i in range(colmap.N)]
    return colmap.from_list('Custom discrete cmap', cmaplist, N)
 
 class hovmoeller:
+  """Class for plotting of hovmoeller diagrams using the contourf function,
+  using surface zoom (optionally)."""
+
   def __init__(self,t,dz,Var,contours=10,ztype="z",orientation="up",surface_zoom=True,
         zoom_obj=surface_zoom(),ax=0,lineopts={},**opts):
+    """Defines basic settings and geometry and plots a hovmoeller diagram.
+
+    Args:
+        t (integer, float or datetime 1D-array): horizontal coordinate.
+        dz (float 1D-array): thickness of vertical coordinate levels or vertical
+            coordinate depending on ztype argument.
+        Var (integer or float 2D-array): data array with dimensions
+            len(dz),len(t)
+        contours (any object accepted as third argument by the contourf function):
+            contour argument to pass to contourf function (defaults to 10 for
+            10 contour levels)
+        ztype (string): definition of dz (vertical coordinate) type. For ztype=-"dz"
+            dz is interpreted as vertical cell thickness, otherwise as cell centres.
+            Defaults to "z", i.e. vertical cell centres.
+        orientation (string): if not "up", the vertical coordinate is flipped.
+        surface_zoom (boolean): if True the vertical coordinate is projected
+            using zoom_obj.
+        ax (matplotlib.axes object): Axes to be used for plot (defaults to 0,
+            whic creates a new figure and axes).
+        lineopts (dictionary): dictionary with options for contour lines passed
+            to the contourf function.
+        **opts: keyword options passed to the contourf function.
+    """
     self.zoom=zoom_obj
     if ztype=="dz": #z-variable gives zell thickness, else cell centre
       if dz.ndim==1:
@@ -79,6 +116,14 @@ class hovmoeller:
     self.ax=ax
 
   def set_ticks(self,ticks,ticklables=()):
+    """
+    Sets ticks and ticklabels of vertical axis in hovmoeller diagram.
+
+    Args:
+        ticks (sequence of floats): positions of vertical ticks
+        ticklables (sequence of strings): strings to be used as ticklables,
+            if empty (default), these will be generated automatically from ticks.
+    """
     self.ax.yaxis.set_ticks(self.zoom(ticks))
     if ticklables:
         self.ax.yaxis.set_ticklabels(ticklables)
@@ -87,12 +132,20 @@ class hovmoeller:
 
 
 def cmap_map(function,cmap):
-    """ Applies function (which should operate on vectors of shape 3:
-    [r, g, b], on colormap cmap. This routine will break any discontinuous points in a colormap.
+    """ Manipulates a colormap by applying function on colormap cmap.
+    This routine will break any discontinuous points in a colormap.
+
+    Args:
+        function: function to apply on cmap. Has to take a single argument with
+            sequence of shape N,3 [r, g, b].
+        cmap: colormap to apply function on.
+
+    Returns:
+        Linear Segmented Colormap with function applied.
     """
     cdict = cmap._segmentdata
     step_dict = {}
-    # Firt get the list of points where the segments start or end
+    # First get the list of points where the segments start or end
     for key in ('red','green','blue'):
         step_dict[key] = map(lambda x: x[0], cdict[key])
     step_list = reduce(lambda x, y: x+y, step_dict.values())
@@ -116,6 +169,16 @@ def cmap_map(function,cmap):
     return LinearSegmentedColormap('colormap',cdict,1024)
 
 def discreteColors(noc,cols=['r','b','#FFF000','g','m','c','#FF8000','#400000','#004040','w','b']):
+    """Generate a colormap from list of discrete input colours.
+
+    Args:
+        noc (integer): number of desired discrete colours.
+        cols (list of matplotlib colour objects): sequence of colours to use. If
+            < noc repeated up to required length.
+
+    Returns:
+        LinearSegmentedColormap with discrete colours.
+    """
     while noc>len(cols): cols.extend(cols)
     cc=ColorConverter()
     clrs=[cc.to_rgba(col) for col in cols]
@@ -140,11 +203,28 @@ def discreteColors(noc,cols=['r','b','#FFF000','g','m','c','#FF8000','#400000','
     return LinearSegmentedColormap('discreteMap',cdict)
 
 def discreteGreys(nog):
+    """Generate a colormap with discrete number shades of grey.
+
+    Args:
+        nog (integer): number of levels of grey.
+
+    Returns:
+        LinearSegmentedColormap with discrete grey levels.
+    """
     dg=1./(nog-1)
     greys=[str(g) for g in arange(0,1+dg*.1,dg)]
     return discreteColors(nog,greys)
 
 def chlMapFun(Nlev=256):
+    """Natural colour like colormap for chlorophyll-a plots.
+
+    Args:
+        Nlev (integer): number of colour levels, defaults to 256.
+
+    Returns:
+        LinearSegmentedColormap
+    """
+
     return LinearSegmentedColormap('chlMap',
     {'blue':((0.,.1,.1),(.66,.95,.95),(1.,1.,1.)),
     'green':((0.,0.,0.),(.1,.0,.0),(.66,.95,.95),(1.,1.,1.)),
@@ -259,15 +339,30 @@ def asymmetric_cmap_around_zero(vmin,vmax,**opts):
 
 if pyprojFlag:
    def getDistance(lon1,lat1,lon2,lat2,geoid='WGS84'):
+      """Get distance betwwen two points on the earth surface.
+
+      Args:
+        lon1(float): longitude of first point
+        lat1(float): latitude of first point
+        lon2(float): longitude of second point
+        lat2(float): latitude of second point
+        geoid(string): geoid to use for projection, defaults to "WGS84"
+
+      Returns:
+        distance in km (float)
+      """
       g=Geod(ellps=geoid)
       return g.inv(lon1,lat1,lon2,lat2)[2]
 
 def findXYDuplicates(x,y,d,preserveMask=False):
-    """Finds X,Y duplicates for data given in x,y coordinates.
-       x: X-coordinate (1d-array)
-       y: Y-coordinate (1d-array)
-       d: data defined on x,y (1d-array)
-    Returns sorted x,y,d and duplicate mask (0 where duplicate)"""
+    """Finds duplicates in position for data given in x,y coordinates.
+    Args:
+       x (1d-array): X-coordinate
+       y (1d-array): Y-coordinate
+       d (1d-array): data defined on x,y
+       preserveMask: flag to preserve mask of input data, defaults to False.
+    Returns:
+       x,y,d and duplicate mask (0 where duplicate), sorted by x,y"""
     if not len(x)==len(y)==len(d):
       logging.warning("Longitude, Lattitude and data size don't match:")
       logging.warning("  Lon: "+str(len(x))+" Lat: "+str(len(y))+" Data: "+str(len(d)))
@@ -298,11 +393,15 @@ def findXYDuplicates(x,y,d,preserveMask=False):
     return x,y,d,duplMask
 
 def removeXYDuplicates(x,y,d,mask=False):
-    """Removes X,Y duplicates for data given in x,y coordinates.
-       x: X-coordinate (1d-array)
-       y: Y-coordinate (1d-array)
-       d: data defined on x,y (1d-array)
-       Returns sorted x,y,d with duplicates removed"""
+    """Removes duplicates in position for data given in x,y coordinates.
+
+    Args:
+       x (1d-array): X-coordinate
+       y (1d-array): Y-coordinate
+       d (1d-array): data defined on x,y
+       mask: flag to preserve mask of input data, defaults to False.
+    Returns:
+       x,y,d with duplicates removed, sorted by x,y"""
     x,y,d,Mask=findXYDuplicates(x,y,d,preserveMask=mask)
     if not all(Mask):
         d=compress(Mask,d)
@@ -311,23 +410,78 @@ def removeXYDuplicates(x,y,d,mask=False):
         logging.info("Duplicate points removed in x/y map...")
     return x,y,d
 
-def plotSmallDataRange(x,ycentre,yupper,ylower,linetype='-',color='r',fillcolor="0.8",edgecolor='k',alpha=1.,**args):
+def plotSmallDataRange(x,ycentre,yupper,ylower,linetype='-',color='r',fillcolor="0.8",edgecolor='k',alpha=1.):
+    """Plots data range over x, given by series of centre, upper and lower values.
+    Args:
+        x (float,intger, datetime series): x coordinate
+        ycentre (float,integer series): midlle or average values of range to show, plotted as line
+        yupper (float,integer series): upper limit of values, plotted as upper edge line
+        ylower (float,integer series): lower limit of values, plotted as lower edge line
+        linetype (plot [fmt] argument): line format used for ycentre
+        color (matplotlib color): colour used for ycentre line
+        fillcolor (matplotlib color): colour used to fille space between yupper and ylower
+        edgecolor (matplotlib color): colour used for limiting lines
+        alpha (float): transparency level of filling colour (default: 0.8)
+    """
     fill_between(x,yupper,ylower,color=fillcolor,edgecolor=edgecolor,alpha=alpha)
     plot(x,ycentre,linetype,color=color)
-def plotDataRange(x,ycentre,yupper,ylower,yup,ylow,linetype='-',color='r',fillcolor="0.8",edgecolor='k',alpha=1.,**args):
+
+def plotDataRange(x,ycentre,yupper,ylower,yup,ylow,linetype='-',color='r',fillcolor="0.8",edgecolor='k',alpha=1.):
+    """Plots data range over x, given by series of centre, upper and lower values.
+    Args:
+        x (float,intger, datetime series): x coordinate
+        ycentre (float,integer series): midlle or average values of range to show, plotted as line
+        yupper (float,integer series): upper limit of values, plotted as upper edge line
+        ylower (float,integer series): lower limit of values, plotted as lower edge line
+        yup (float,integer series): values on the higher end of range to show, plotted as dotted line
+        ylow (float,integer series): values on the lower end of range to show, plotted as dotted line
+        linetype (plot [fmt] argument): line format used for ycentre
+        color (matplotlib color): colour used for ycentre line
+        fillcolor (matplotlib color): colour used to fille space between yupper and ylower
+        edgecolor (matplotlib color): colour used for limiting lines
+        alpha (float): transparency level of filling colour (default: 0.8)
+    """
     fill_between(x,yupper,ylower,color=fillcolor,edgecolor=edgecolor,alpha=alpha)
     plot(x,ycentre,linetype,color=color)
     plot(x,yup,':',color=edgecolor)
     plot(x,ylow,':',color=edgecolor)
-def plotFullDataRange(x,ycentre,yupper,ylower,yup,ylow,yu,yl,color='r',fillcolor="0.8",edgecolor='k',alpha=1.,**args):
+def plotFullDataRange(x,ycentre,yupper,ylower,yup,ylow,yu,yl,color='r',fillcolor="0.8",edgecolor='k',alpha=1.):
+    """Plots data range over x, given by series of centre, upper and lower values.
+    Args:
+        x (float,intger, datetime series): x coordinate
+        ycentre (float,integer series): midlle or average values of range to show, plotted as line
+        yupper (float,integer series): upper limit of values, plotted as upper edge line
+        ylower (float,integer series): lower limit of values, plotted as lower edge line
+        yup (float,integer series): values on the higher end of range to show, plotted as dashedline
+        ylow (float,integer series): values on the lower end of range to show, plotted as dashed line
+        yu (float,integer series): additional set of values on the higher end of range to show,
+            plotted as dotted line
+        yl (float,integer series): additional set of values on the lower end of range to show,
+            plotted as dotted line
+        linetype (plot [fmt] argument): line format used for ycentre
+        color (matplotlib color): colour used for ycentre line
+        fillcolor (matplotlib color): colour used to fille space between yupper and ylower
+        edgecolor (matplotlib color): colour used for limiting lines
+        alpha (float): transparency level of filling colour (default: 0.8)
+    """
     fill_between(x,yupper,ylower,color=fillcolor,edgecolor=edgecolor,alpha=alpha)
     plot(x,ycentre,color=color)
     plot(x,yup,'--',color=edgecolor)
     plot(x,ylow,'--',color=edgecolor)
     plot(x,yu,':',color=edgecolor)
     plot(x,yl,':',color=edgecolor)
-def plotSpread(y,data,range=1,**opts):
-    "plot data spread with y as variable dimension and x as sample dimension."
+
+def plotSpread(x,data,range=1,**opts):
+    """Plot data spread over y along x coordinate.
+
+    Args:
+        x: coordinate of length N
+        data: data of shape [N,K], spread is computed over K dimension, using quantiles.
+        range: sets quantiles to use for plotting.
+            1 - plot quantiles [.05,.25,.5,.75,.95] (default)
+            2 - plot quantiles [.01,.05,.25,.5,.75,.95,.99]
+            else plot quantiles [.25,.5,.75,]
+    """
     if range==2:
       probs=[.01,.05,.25,.5,.75,.95,.99]
     elif range==1:
@@ -337,15 +491,25 @@ def plotSpread(y,data,range=1,**opts):
     mq=lambda d: mquantiles(d,probs)
     a=array([mq(d) for d in data]).transpose()
     if range==2:
-        plotFullDataRange(y,a[3],a[2],a[4],a[1],a[5],a[0],a[6],**opts)
+        plotFullDataRange(x,a[3],a[2],a[4],a[1],a[5],a[0],a[6],**opts)
     elif range==1:
-        plotDataRange(y,a[2],a[1],a[3],a[0],a[4],**opts)
+        plotDataRange(x,a[2],a[1],a[3],a[0],a[4],**opts)
     else:
-        plotSmallDataRange(y,a[1],a[0],a[2],**opts)
-
+        plotSmallDataRange(x,a[1],a[0],a[2],**opts)
 
 
 def hcolorbar(shrink=0.5,pad=.05,**opts):
+    """Horizontal colorbar.
+
+    Args:
+        shrink (float): shriking factor (default: 0.5)
+        pad (float): padding to separate colorbar from other axes, expressed as
+            fraction of orgiinal axes (default: 0.05)
+        **opts: other options passed to colorbar function
+
+    Returns:
+        colorbar object
+    """
     return colorbar(orientation='horizontal',shrink=shrink,pad=pad,**opts)
 
 moreColors={}
