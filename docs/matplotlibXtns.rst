@@ -13,15 +13,6 @@ matplotlibXtns.matplotlibXtns module
     :special-members:
     :show-inheritance:
 
-matplotlibXtns.basemapXtns module
----------------------------------
-
-.. automodule:: matplotlibXtns.basemapXtns
-    :members:
-    :undoc-members:
-    :special-members:
-    :show-inheritance:
-
 matplotlibXtns.cartopyXtns module
 ---------------------------------
 
