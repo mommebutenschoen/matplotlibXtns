@@ -161,13 +161,13 @@ if cartopy_installed:
                 return x,y,dxy.reshape(xx.shape)
 
         def interpolated_contourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
-            x,y,d=self.interpolate(lon,lat,data,res=res,zoom=zoom,mask=mask,method=method)
-            logging.info("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
+            x,y,d=self.interpolate(lon,lat,data,res=res,zoom=zoom,mask=mask,method="linear")
+            logging.info("interpolated coordinate range:",x.min(),x.max(),y.min(),y.max())
             logging.info("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.contourf(x,y,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
         def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
-            x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom,mask=mask)
+            x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom,mask=mask,method="linear")
             logging.info("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
             logging.info("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
