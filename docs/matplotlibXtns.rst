@@ -28,5 +28,4 @@ Module contents
 .. automodule:: matplotlibXtns
     :members:
     :undoc-members:
-    :special-members:
     :show-inheritance:
