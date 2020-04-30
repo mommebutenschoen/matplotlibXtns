@@ -28,7 +28,7 @@ class surface_zoom:
         (z**1/n), where n can be chosen by the user.
 
         Args:
-            n(integer): exponent of mapping function (default:3)
+            n(integer): exponent of mapping function
         """
 
         self._n=n
@@ -77,7 +77,7 @@ def discretizeColormap(colmap,N):
    """Constructs colormap with N discrete color levels from continous map.
 
    Args:
-      colmap(matplotlib.colors.colormap or derived object): colormap from which
+      colmap(matplotlib.colors.colormap or derived instance): colormap from which
         to pick discrete colours;
       N (integer): number of colour levels
 
@@ -102,16 +102,14 @@ class hovmoeller:
         Var (integer or float 2D-array): data array with dimensions
             len(dz),len(t)
         contours (any object accepted as third argument by the contourf function):
-            contour argument to pass to contourf function (defaults to 10 for
-            10 contour levels)
+            contour argument to pass to contourf function
         ztype (string): definition of dz (vertical coordinate) type. For ztype=-"dz"
             dz is interpreted as vertical cell thickness, otherwise as cell centres.
-            Defaults to "z", i.e. vertical cell centres.
         orientation (string): if not "up", the vertical coordinate is flipped.
         surface_zoom (boolean): if True the vertical coordinate is projected
             using zoom_obj.
-        ax (matplotlib.axes object): Axes to be used for plot (defaults to 0,
-            whic creates a new figure and axes).
+        ax (matplotlib.axes.Axes): Axes to be used for plot (if 0,
+            creates a new figure and axes).
         lineopts (dictionary): dictionary with options for contour lines passed
             to the contourf function.
         **opts: keyword options passed to the contourf function.
@@ -152,7 +150,7 @@ class hovmoeller:
     Args:
         ticks (sequence of floats): positions of vertical ticks
         ticklables (sequence of strings): strings to be used as ticklables,
-            if empty (default), these will be generated automatically from ticks.
+            if empty, these will be generated automatically from ticks.
     """
     self.ax.yaxis.set_ticks(self.zoom(ticks))
     if ticklables:
@@ -203,7 +201,7 @@ def discreteColors(noc,cols=['r','b','#FFF000','g','m','c','#FF8000','#400000','
 
     Args:
         noc (integer): number of desired discrete colours.
-        cols (list of matplotlib colour objects): sequence of colours to use. If
+        cols (list of matplotlib colours): sequence of colours to use. If
             < noc repeated up to required length.
 
     Returns:
@@ -249,7 +247,7 @@ def chlMapFun(Nlev=256):
     """Natural colour like colormap for chlorophyll-a plots.
 
     Args:
-        Nlev (integer): number of colour levels, defaults to 256.
+        Nlev (integer): number of colour levels
 
     Returns:
         LinearSegmentedColormap
@@ -324,8 +322,7 @@ def asymmetric_divergent_cmap(point0,colorlow="xkcd:reddish",colorhigh="xkcd:pet
         colorlow (valid matplotlib color specification): color at low limit of colormap
         colorhigh (valid matplotlib color specification): color at high limit of colormap
         color0_low (valid matplotlib color specification): color at point0 approached from lower values
-        color0_high (valid matplotlib color specification): color at point0 approached from higher value,
-            defaults to color0_low
+        color0_high (valid matplotlib color specification): color at point0 approached from higher value
         n (integer): color resolution
 
     Returns:
@@ -376,7 +373,7 @@ if pyprojFlag:
         lat1(float): latitude of first point
         lon2(float): longitude of second point
         lat2(float): latitude of second point
-        geoid(string): geoid to use for projection, defaults to "WGS84"
+        geoid(string): geoid to use for projection
 
       Returns:
         distance in km (float)
@@ -391,7 +388,8 @@ def findXYDuplicates(x,y,d,preserveMask=False):
        x (1d-array): X-coordinate
        y (1d-array): Y-coordinate
        d (1d-array): data defined on x,y
-       preserveMask: flag to preserve mask of input data, defaults to False.
+       preserveMask: flag to preserve mask of input data
+
     Returns:
        x,y,d and duplicate mask (0 where duplicate), sorted by x,y"""
     if not len(x)==len(y)==len(d):
@@ -430,7 +428,8 @@ def removeXYDuplicates(x,y,d,mask=False):
        x (1d-array): X-coordinate
        y (1d-array): Y-coordinate
        d (1d-array): data defined on x,y
-       mask: flag to preserve mask of input data, defaults to False.
+       mask: flag to preserve mask of input data
+
     Returns:
        x,y,d with duplicates removed, sorted by x,y"""
     x,y,d,Mask=findXYDuplicates(x,y,d,preserveMask=mask)
@@ -453,7 +452,7 @@ def plotSmallDataRange(x,ycentre,yupper,ylower,linetype='-',color='r',fillcolor=
         color (matplotlib color): colour used for ycentre line
         fillcolor (matplotlib color): colour used to fille space between yupper and ylower
         edgecolor (matplotlib color): colour used for limiting lines
-        alpha (float): transparency level of filling colour (default: 0.8)
+        alpha (float): transparency level of filling colour
     """
     fill_between(x,yupper,ylower,color=fillcolor,edgecolor=edgecolor,alpha=alpha)
     plot(x,ycentre,linetype,color=color)
@@ -472,7 +471,7 @@ def plotDataRange(x,ycentre,yupper,ylower,yup,ylow,linetype='-',color='r',fillco
         color (matplotlib color): colour used for ycentre line
         fillcolor (matplotlib color): colour used to fille space between yupper and ylower
         edgecolor (matplotlib color): colour used for limiting lines
-        alpha (float): transparency level of filling colour (default: 0.8)
+        alpha (float): transparency level of filling colour
     """
     fill_between(x,yupper,ylower,color=fillcolor,edgecolor=edgecolor,alpha=alpha)
     plot(x,ycentre,linetype,color=color)
@@ -496,7 +495,7 @@ def plotFullDataRange(x,ycentre,yupper,ylower,yup,ylow,yu,yl,color='r',fillcolor
         color (matplotlib color): colour used for ycentre line
         fillcolor (matplotlib color): colour used to fille space between yupper and ylower
         edgecolor (matplotlib color): colour used for limiting lines
-        alpha (float): transparency level of filling colour (default: 0.8)
+        alpha (float): transparency level of filling colour
     """
     fill_between(x,yupper,ylower,color=fillcolor,edgecolor=edgecolor,alpha=alpha)
     plot(x,ycentre,color=color)
@@ -512,7 +511,7 @@ def plotSpread(x,data,range=1,**opts):
         x: coordinate of length N
         data: data of shape [N,K], spread is computed over K dimension, using quantiles.
         range: sets quantiles to use for plotting.
-            1 - plot quantiles [.05,.25,.5,.75,.95] (default)
+            1 - plot quantiles [.05,.25,.5,.75,.95]
             2 - plot quantiles [.01,.05,.25,.5,.75,.95,.99]
             else plot quantiles [.25,.5,.75,]
     """
@@ -536,13 +535,13 @@ def hcolorbar(shrink=0.5,pad=.05,**opts):
     """Horizontal colorbar.
 
     Args:
-        shrink (float): shriking factor (default: 0.5)
+        shrink (float): shriking factor
         pad (float): padding to separate colorbar from other axes, expressed as
-            fraction of orgiinal axes (default: 0.05)
+            fraction of orgiinal axes 
         **opts: other options passed to colorbar function
 
     Returns:
-        colorbar object
+        colorbar instance
     """
     return colorbar(orientation='horizontal',shrink=shrink,pad=pad,**opts)
 

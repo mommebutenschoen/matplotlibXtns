@@ -17,12 +17,15 @@ if cartopy_installed:
     from numpy.ma import getmaskarray,masked_where,getdata
 
     class oceanMap:
+        """Base class for globalOceanMap and regionalOceanMap only, not to be
+        used for creating instances directly."""
+
         def __init__(self,lon0=0.,prj=crs.PlateCarree,*args,**opts):
-            """Class for global maps using cartopy Mollweide or PlateCarree projections.
+            """Set-up projection to use for map.
 
             Args:
                 lon_0(float): central longitude
-                prj(string or cartopy.crs object): projection used, currently implemented
+                prj(string or cartopy.crs instance): projection used, currently implemented
                     for Mollweide or PlateCarree (in case of string argument "Mollweide" or "PlateCarree")
                 *args,**opts: passed to prj.__init__ function.
             """
@@ -40,6 +43,26 @@ if cartopy_installed:
             #get bounding box of the globe in native coordinates
 
         def contourf(self,x,y,*args,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,**opts):
+            """Contour plot over global ocean in native projection coordinates.
+
+            Args:
+                x (float array): x-coordinate
+                y (float array): y-coordinate
+                *args: positional arguments passed to matplotlib.pyplot.contourf
+                    function
+                land_colour: fill colour for land parts of map
+                land_res: resolution of coastline, see
+                    cartopy.feature.NaturalEarthFeature
+                f (matplotlib.figure.figure): figure to use for plot,
+                    if False creates new figure
+                ax (matplotlib.axes.Axes): axes to use, if False creates new Axes
+                colourbar (boolean): if True adds colourbar to plot
+                **opts: keyword arguments passed to matplotlib.pyplot.contourf
+
+            Returns:
+                tuple with matplotlib.contou.QuadContourSet and
+                matplotlib.colorbar.Colorbar instances.
+            """
             if not f:
                 f=figure(figsize=[12,6])
             if not ax:
@@ -51,10 +74,31 @@ if cartopy_installed:
                 ax.add_feature(feature.NaturalEarthFeature('physical', 'land', land_res,
                                         facecolor=land_colour))
             #ax.set_extent([xmin,xmax,ymin,ymax])
-            if colourbar: cb=f.colorbar(pcm,ax=ax,shrink=.5,aspect=10)
+            if colourbar: cb=f.colorbar(cnt,ax=ax,shrink=.5,aspect=10)
             return cnt,cb
 
         def pcolormesh(self,x,y,*args,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,**opts):
+            """Pcolormesh plot over global ocean in native projection coordinates.
+
+            Args:
+                x (float array): x-coordinate
+                y (float array): y-coordinate
+                *args: positional arguments passed to matplotlib.pyplot.pcolormesh
+                    function
+                land_colour: fill colour for land parts of map
+                land_res: resolution of coastline, see
+                    cartopy.feature.NaturalEarthFeature
+                f (matplotlib.figure.figure): figure to use for plot,
+                    if False creates new figure
+                ax (matplotlib.axes.Axes): axes to use, if False creates new Axes
+                colourbar (boolean): if True adds colourbar to plot
+                **opts: keyword arguments passed to matplotlib.pyplot.contourf
+
+            Returns:
+                tuple with matplotlib.collections.QuadMesh and
+                matplotlib.colorbar.Colorbar instances.
+            """
+
             if not f:
                 f=figure(figsize=[12,6])
             if not ax:
@@ -68,6 +112,32 @@ if cartopy_installed:
             return pcm,cb
 
         def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=0,mask=False,**opts):
+            """Projects and interpolates data from grid defined in longitudes and
+            latitudes to regular grid in native projection coordinates using
+            scipy.interpolate.griddata function.
+
+            Args:
+                lon: (float array): longitudes of data to project and interpolate
+                    (same shape required)
+                lat: (float array): latitudes of data to project and interpolate
+                    (same shape required)
+                data: (float array): data to project and interpolate
+                *args: positional arguments passed to griddata function for
+                    interpolation
+                res (float): number of horizontal pixels of regular interpolated
+                    grid
+                bounds (boolean): if True creates also coordinate bounds
+                zoom (integer): zoom of global map, given as percentage of full map to
+                    be shown, 0 means no zoom
+                mask (boolean): consider data mask in interpolation
+                **opts: keyword arguments to be passed to griddata function for
+                    interpolation
+
+            Returns:
+                tuple of interpolated x and y in projection coordinates,
+                interpolated data (and x and y bounds if bounds=True)
+            """
+
             logging.info("Interpolating field...")
             Mask=logical_not(getmaskarray(data))
             data=getdata(data)
@@ -161,23 +231,85 @@ if cartopy_installed:
                 return x,y,dxy.reshape(xx.shape)
 
         def interpolated_contourf(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
+            """Contour plot over global ocean interpolating from lon,lat coordinates.
+
+            Args:
+                lon (float array): longitudinal coordinates of data (same shape
+                    required)
+                lat (float array): latitudinal coordinates of data (same shape
+                    required)
+                data (float array): data array to interpolate
+                *args: positional arguments passed to matplotlib.pyplot.contourf
+                    function
+                res (float): number of horizontal pixels of regular interpolated
+                    grid
+                land_colour: fill colour for land parts of map
+                land_res: resolution of coastline, see
+                    cartopy.feature.NaturalEarthFeature
+                f (matplotlib.figure.figure): figure to use for plot,
+                    if False creates new figure
+                ax (matplotlib.axes.Axes): axes to use, if False creates new Axes
+                colourbar (boolean): if True adds colourbar to plot
+                **opts: keyword arguments passed to matplotlib.pyplot.contourf
+                zoom (integer): zoom of global map, given as percentage of full map to
+                    be shown, 0 means no zoom
+                mask (boolean): consider data mask in interpolation
+                **opts: keyword arguments passed to matplotlib.pyplot.contourf
+
+            Returns:
+                tuple with matplotlib.contou.QuadContourSet and
+                matplotlib.colorbar.Colorbar instances.
+            """
             x,y,d=self.interpolate(lon,lat,data,res=res,zoom=zoom,mask=mask,method="linear")
             logging.info("interpolated coordinate range:",x.min(),x.max(),y.min(),y.max())
             logging.info("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.contourf(x,y,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
         def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=0,mask=False,**opts):
+            """Pcolormesh plot over global ocean interpolating from lon,lat coordinates.
+
+            Args:
+                lon (float array): longitudinal coordinates of data (same shape
+                    required)
+                lat (float array): latitudinal coordinates of data (same shape
+                    required)
+                data (float array): data array to interpolate
+                *args: positional arguments passed to matplotlib.pyplot.contourf
+                    function
+                res (float): number of horizontal pixels of regular interpolated
+                    grid
+                land_colour: fill colour for land parts of map
+                land_res: resolution of coastline, see
+                    cartopy.feature.NaturalEarthFeature
+                f (matplotlib.figure.figure): figure to use for plot,
+                    if False creates new figure
+                ax (matplotlib.axes.Axes): axes to use, if False creates new Axes
+                colourbar (boolean): if True adds colourbar to plot
+                zoom (integer): zoom of global map, given as percentage of full map to
+                    be shown, 0 means no zoom
+                mask (boolean): consider data mask in interpolation
+                **opts: keyword arguments passed to matplotlib.pyplot.pcolormesh
+
+            Returns:
+                tuple with matplotlib.collections.QuadMesh and
+                matplotlib.colorbar.Colorbar instances.            """
             x,y,d,xb,yb=self.interpolate(lon,lat,data,res=res,bounds=True,zoom=zoom,mask=mask,method="linear")
             logging.info("interpolated coordinate range:",xb.min(),xb.max(),yb.min(),yb.max())
             logging.info("map coordinate range:",self.prj.x_limits,self.prj.y_limits)
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
     class globalOceanMap(oceanMap):
+        """Class for global ocean maps."""
+
         def __init__(self,lon0=0.,prj=crs.Mollweide,*args,**opts):
+
             oceanMap.__init__(self,lon0=lon0,prj=prj,*args,**opts)
 
     class regionalOceanMap(oceanMap):
+        """Class for global ocean maps."""
+
         def __init__(self,lon0=0.,lat0=0.,prj=crs.AlbersEqualArea,**opts):
+
             if type(prj)==str:
                 if prj.lower().strip()=="albersequalarea":
                     prj=crs.AlbersEqualArea
@@ -214,6 +346,7 @@ if cartopy_installed:
             return oceanMap.interpolated_contourf(self,lon,lat,data,*args,res=res,land_colour=land_colour,land_res=land_res,f=f,ax=ax,colourbar=colourbar,zoom=zoom,**opts)
 
         def interpolated_pcolormesh(self,lon,lat,data,*args,res=360.,land_colour="#485259",land_res='50m',f=False,ax=False,colourbar=True,zoom=101,**opts):
+
             return oceanMap.interpolated_pcolormesh(self,lon,lat,data,*args,res=res,land_colour=land_colour,land_res=land_res,f=f,ax=ax,colourbar=colourbar,zoom=zoom,**opts)
 
         def interpolate(self,lon,lat,data,*args,res=360.,bounds=False,zoom=101,method="linear",**opts):
