@@ -17,30 +17,60 @@ from operator import itemgetter
 from matplotlib.ticker import MaxNLocator,AutoLocator
 import logging
 
-#depthfun = lambda z: z**4/(z**3-2500**3) #assuming negative z
-depthfun = lambda z: (1./z-1.)*z #assuming negative z
 class surface_zoom:
     """Class with depth transformation function for zooming towards the
     ocean surface and its inverse in order to provide tick lables.
     Assumes negative z values."""
 
     def __init__(self,n=3):
-        """Defines polyniomial mapping of vertical levels of the form:
+        """Defines zoom level via exponent of the inverse power mappings of
+        vertical levels of the form:
         (z**1/n), where n can be chosen by the user.
 
         Args:
-            n(intger): exponent of mapping function (default:3)
+            n(integer): exponent of mapping function (default:3)
         """
+
         self._n=n
 
-    __func__ = lambda self,z: sign(z)*abs(z)**(1./float(self._n))
+    def __func__(self,z):
+        """Mapping function (inverse power function) applied to project actual
+         depth.
 
-    inv = lambda self,z: sign(z)*abs(z)**(float(self._n))
+        Args:
+            z(float array): original depth coordinates
+
+        Returns:
+            projected depth coordinates (float array)
+        """
+
+        return sign(z)*abs(z)**(1./float(self._n))
+
+    def inv(self,z):
+        """
+        Inverse mapping function to obtain original depth coordinates from
+        projected ones.
+
+        Args:
+            z (float array): levels in projected coordinates
+
+        Returns:
+            Levels in original coordinates (float array).
+        """
+
+        return sign(z)*abs(z)**(float(self._n))
 
     def __call__(self,z):
-        """Transformation of array of depth levels.
+        """Transformation of array of depth levels applying mapping function
+        __func__.
+
         Args:
-            z(array of floats): original depth values."""
+            z(array of floats): original depth values.
+
+        Returns:
+            mapping function applied on input z.
+        """
+
         return self.__func__(z)
 
 def discretizeColormap(colmap,N):
@@ -356,6 +386,7 @@ if pyprojFlag:
 
 def findXYDuplicates(x,y,d,preserveMask=False):
     """Finds duplicates in position for data given in x,y coordinates.
+
     Args:
        x (1d-array): X-coordinate
        y (1d-array): Y-coordinate
@@ -412,6 +443,7 @@ def removeXYDuplicates(x,y,d,mask=False):
 
 def plotSmallDataRange(x,ycentre,yupper,ylower,linetype='-',color='r',fillcolor="0.8",edgecolor='k',alpha=1.):
     """Plots data range over x, given by series of centre, upper and lower values.
+
     Args:
         x (float,intger, datetime series): x coordinate
         ycentre (float,integer series): midlle or average values of range to show, plotted as line
@@ -428,6 +460,7 @@ def plotSmallDataRange(x,ycentre,yupper,ylower,linetype='-',color='r',fillcolor=
 
 def plotDataRange(x,ycentre,yupper,ylower,yup,ylow,linetype='-',color='r',fillcolor="0.8",edgecolor='k',alpha=1.):
     """Plots data range over x, given by series of centre, upper and lower values.
+
     Args:
         x (float,intger, datetime series): x coordinate
         ycentre (float,integer series): midlle or average values of range to show, plotted as line
@@ -447,6 +480,7 @@ def plotDataRange(x,ycentre,yupper,ylower,yup,ylow,linetype='-',color='r',fillco
     plot(x,ylow,':',color=edgecolor)
 def plotFullDataRange(x,ycentre,yupper,ylower,yup,ylow,yu,yl,color='r',fillcolor="0.8",edgecolor='k',alpha=1.):
     """Plots data range over x, given by series of centre, upper and lower values.
+
     Args:
         x (float,intger, datetime series): x coordinate
         ycentre (float,integer series): midlle or average values of range to show, plotted as line
