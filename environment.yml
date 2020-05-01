@@ -1,0 +1,8 @@
+name: matplotlibXtns
+dependencies:
+  - netCDF4
+  - matplotlib
+  - numpy
+  - scipy
+  - cartopy
+  - pyproj
