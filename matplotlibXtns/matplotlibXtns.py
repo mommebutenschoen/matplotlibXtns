@@ -89,7 +89,16 @@ def discretizeColormap(colmap,N):
 
 class hovmoeller:
   """Class for plotting of hovmoeller diagrams using the contourf function,
-  using surface zoom (optionally)."""
+  using surface zoom (optionally).
+
+  Attributes:
+    zoom (surface_zoom instance): projection to use for vertical coordinate
+    contours (matplotlib.contour.QuadContourSet): contour set with filled
+        contour levels of plot
+    contourlines (matplotlib.contour.QuadContourSet) contour set with contour
+        lines
+    ax (matplotlib.axes.Axes): Axes to be used for plot
+  """
 
   def __init__(self,t,dz,Var,contours=10,ztype="z",orientation="up",surface_zoom=True,
         zoom_obj=surface_zoom(),ax=0,lineopts={},**opts):
@@ -537,7 +546,7 @@ def hcolorbar(shrink=0.5,pad=.05,**opts):
     Args:
         shrink (float): shriking factor
         pad (float): padding to separate colorbar from other axes, expressed as
-            fraction of orgiinal axes 
+            fraction of original axes
         **opts: other options passed to colorbar function
 
     Returns:

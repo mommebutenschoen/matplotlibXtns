@@ -18,7 +18,13 @@ if cartopy_installed:
 
     class oceanMap:
         """Base class for globalOceanMap and regionalOceanMap only, not to be
-        used for creating instances directly."""
+        used for creating instances directly.
+
+        Attributes:
+            prj (cartopy.crs instance): projection used
+            ref_prj (cartopy.crs instance): reference projection used for
+                coordinate conversion
+        """
 
         def __init__(self,lon0=0.,prj=crs.PlateCarree,*args,**opts):
             """Set-up projection to use for map.
@@ -299,14 +305,26 @@ if cartopy_installed:
             return self.pcolormesh(xb,yb,d,*args,land_colour=land_colour,f=f,ax=ax,colourbar=colourbar,**opts)
 
     class globalOceanMap(oceanMap):
-        """Class for global ocean maps."""
+        """Class for global ocean maps.
+
+        Attributes:
+            prj (cartopy.crs instance): projection used
+            ref_prj (cartopy.crs instance): reference projection used for
+                coordinate conversion
+        """
 
         def __init__(self,lon0=0.,prj=crs.Mollweide,*args,**opts):
 
             oceanMap.__init__(self,lon0=lon0,prj=prj,*args,**opts)
 
     class regionalOceanMap(oceanMap):
-        """Class for global ocean maps."""
+        """Class for global ocean maps.
+
+        Attributes:
+            prj (cartopy.crs instance): projection used
+            ref_prj (cartopy.crs instance): reference projection used for
+                coordinate conversion
+        """
 
         def __init__(self,lon0=0.,lat0=0.,prj=crs.AlbersEqualArea,**opts):
 
