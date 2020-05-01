@@ -1,5 +1,6 @@
 conda:
   environment: environment.yml
+  file: environment.yml
 python:
    version: 3.7
    install:
