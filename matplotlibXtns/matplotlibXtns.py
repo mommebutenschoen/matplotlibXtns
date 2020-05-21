@@ -135,7 +135,7 @@ class hovmoeller:
     if surface_zoom:
         z_orig=z
         z=self.zoom(z)
-        logging.info(z[0],z_orig[0])
+        logging.info("{}, {}".format(z[0],z_orig[0]))
     if orientation is not "up":
         Var=fliplr(Var)
     if t.ndim==1:
