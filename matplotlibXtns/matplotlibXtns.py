@@ -149,7 +149,7 @@ class hovmoeller:
     #ticks=ax.yaxis.get_major_locator().tick_values(z_orig.min(),z_orig.max())
     #ax.yaxis.set_ticks(zoom_obj(ticks))
     ticks=ax.get_yticks()
-    ax.yaxis.set_ticklabels(["{}".format(self.zoom.inv(t)) for t in ticks])
+    if surface_zoom: ax.yaxis.set_ticklabels(["{}".format(self.zoom.inv(t)) for t in ticks])
     self.ax=ax
 
   def set_ticks(self,ticks,ticklables=()):
